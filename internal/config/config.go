@@ -26,7 +26,8 @@ type Configuration struct {
 }
 
 // GetConfiguration looks at the command-line arguments passed to the program
-// and extracts a [Configuration] struct from them.
+// and extracts a [Configuration] struct from them. If that fails, this function
+// exits with code [ConfigurationErrorExit].
 func GetConfiguration() (ret Configuration) {
 
 	// Define for error handling

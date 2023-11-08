@@ -11,5 +11,8 @@
 # Workspace file
 go.work
 
+# Benchmarks
+bench/**/*.smt2
+
 # IDE configuration
 .vscode

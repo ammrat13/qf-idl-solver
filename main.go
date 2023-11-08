@@ -1,9 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"log"
+
+	"github.com/ammrat13/qf-idl-solver/internal/config"
 )
 
 func main() {
-	fmt.Println("Hello world!")
+	cfg := config.GetConfiguration()
+	log.Printf("Got configuration: %v\n", cfg)
 }

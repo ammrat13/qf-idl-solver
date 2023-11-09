@@ -53,6 +53,7 @@ var theLexer = lexer.MustSimple([]lexer.SimpleRule{
 	{Name: "OpOr", Pattern: `or`},
 	{Name: "OpXor", Pattern: `xor`},
 	{Name: "OpIfThenElse", Pattern: `ite`},
+	{Name: "OpNegate", Pattern: "-"},
 	{Name: "OpLTE", Pattern: `<=`},
 	{Name: "OpGTE", Pattern: `>=`},
 	{Name: "OpLT", Pattern: `<`},

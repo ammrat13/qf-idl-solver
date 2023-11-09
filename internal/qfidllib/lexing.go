@@ -25,45 +25,11 @@ var theLexer = lexer.MustSimple([]lexer.SimpleRule{
 	{Name: "StringLit", Pattern: `"([^"]|"")+"`},
 	{Name: "BooleanLit", Pattern: `true|false`},
 
-	// These are the keywords for commands. It's useful to parse these
-	// separately from symbols.
-	{Name: "CmdSetInfo", Pattern: `set-info`},
-	{Name: "CmdSetLogic", Pattern: `set-logic`},
-	{Name: "CmdDeclareFun", Pattern: `declare-fun`},
-	{Name: "CmdAssert", Pattern: `assert`},
-	{Name: "CmdCheckSat", Pattern: `check-sat`},
-	{Name: "CmdExit", Pattern: `exit`},
-
-	// These keywords correspond to known attributes. This way we don't have to
-	// do a lot of work to parse them later. We still have to deal with the
-	// values since they aren't technically reserved words.
-	{Name: "AttrVersion", Pattern: `:smt-lib-version`},
-	{Name: "AttrSource", Pattern: `:source`},
-	{Name: "AttrLicense", Pattern: `:license`},
-	{Name: "AttrCategory", Pattern: `:category`},
-	{Name: "AttrStatus", Pattern: `:status`},
-	{Name: "AttrNotes", Pattern: `:notes`},
-
-	// These rules generate the operations we're allowed to do. These don't
-	// distinguish their argument types. That's handled at the parser level.
-	{Name: "OpLet", Pattern: `let`},
-	{Name: "OpNot", Pattern: `not`},
-	{Name: "OpImplies", Pattern: `=>`},
-	{Name: "OpAnd", Pattern: `and`},
-	{Name: "OpOr", Pattern: `or`},
-	{Name: "OpXor", Pattern: `xor`},
-	{Name: "OpIfThenElse", Pattern: `ite`},
-	{Name: "OpNegate", Pattern: "-"},
-	{Name: "OpLTE", Pattern: `<=`},
-	{Name: "OpGTE", Pattern: `>=`},
-	{Name: "OpLT", Pattern: `<`},
-	{Name: "OpGT", Pattern: `>`},
-	{Name: "OpEQ", Pattern: `=`},
-	{Name: "OpNE", Pattern: `distinct`},
-
 	// These rules are to parse simple and complex symbols. Essentially, these
 	// are identifiers and quoted identifiers respectively.
 	{Name: "Symbol", Pattern: `\|[^|\\]*\||[A-Za-z~!@$%^&*_\-+=<>.?\/][A-Za-z0-9~!@$%^&*_\-+=<>.?\/]*`},
+	// This rule parses attributes (keywords in the spec).
+	{Name: "Attribute", Pattern: `:[A-Za-z~!@$%^&*_\-+=<>.?\/][A-Za-z0-9~!@$%^&*_\-+=<>.?\/]*`},
 
 	// Finally, match parentheses.
 	{Name: "ParenOpen", Pattern: `\(`},

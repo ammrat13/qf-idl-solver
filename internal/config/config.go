@@ -64,10 +64,16 @@ func GetConfiguration() (ret Configuration) {
 		os.Exit(ConfigurationErrorExit)
 	}
 
-	// Disable logs if we were told to
-	if !ret.Log {
-		log.SetOutput(io.Discard)
-	}
-
 	return
+}
+
+// SetupLogging sets the output of the log package depending on whether the user
+// requested logging. If logging is disabled, output is discarded, and it's sent
+// to standard error otherwise.
+func (cfg Configuration) SetupLogging() {
+	if !cfg.Log {
+		log.SetOutput(io.Discard)
+	} else {
+		log.SetOutput(os.Stderr)
+	}
 }

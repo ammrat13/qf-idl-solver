@@ -2,8 +2,8 @@
 // types to interface with the generated tree.
 //
 // The parser here is for a subset of SMTLIB, called QFIDLLIB. Not all SMTLIB
-// files will be handled by this, and it may throw an error. See [grammar.go]
-// for more details about what is accepted.
+// files will be handled by this, and it may throw an error. See grammar.go for
+// more details about what is accepted.
 package qfidllib
 
 import (

@@ -18,6 +18,8 @@ const ConfigurationErrorExit = 2
 type Configuration struct {
 	// Input is the reader from which the input file is read.
 	Input io.Reader
+	// InputName is the name of the input file.
+	InputName string
 
 	// Logging reports whether statements using the package log should actually
 	// be written. Note that disabling logging is handled by [GetConfiguration],
@@ -57,10 +59,10 @@ func GetConfiguration() (ret Configuration) {
 	}
 	// Next, try to open the file. It's a hard error if it doesn't exist, so
 	// don't print the usage here
-	inputFileName := flag.Arg(0)
-	ret.Input, err = os.Open(inputFileName)
+	ret.InputName = flag.Arg(0)
+	ret.Input, err = os.Open(ret.InputName)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "could not open input file '%s'\n", inputFileName)
+		fmt.Fprintf(os.Stderr, "could not open input file '%s'\n", ret.InputName)
 		os.Exit(ConfigurationErrorExit)
 	}
 

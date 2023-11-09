@@ -16,5 +16,6 @@ func main() {
 	log.Printf("Got configuration: %v\n", cfg)
 
 	// Parse the input file
-	_ = qfidllib.Parse(&cfg)
+	ast := qfidllib.Parse(cfg.Input)
+	log.Printf("Got AST: %v\n", ast)
 }

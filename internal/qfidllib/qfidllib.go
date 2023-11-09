@@ -1,22 +1,43 @@
 // Package parse takes an input stream and outputs an AST. It also provides the
 // types to interface with the generated tree.
 //
-// The parser here is for a subset of SMTLIB, called QFIDLLIB. Not all SMTLIB
-// files will be handled by this, and it may throw an error. See grammar.go for
+// The parser here is for a subset of SMTLIB, called QFIDL-LIB. Not all SMT-LIB
+// files will be handled by this, and it may throw an error. Additionally,
+// QFIDL-LIB is more permissive than SMT-LIB in some aspects. See grammar.go for
 // more details about what is accepted.
 package qfidllib
 
 import (
-	"github.com/ammrat13/qf-idl-solver/internal/config"
+	"fmt"
+	"io"
+	"os"
+
+	"github.com/alecthomas/participle/v2"
 )
 
 // The ParseErrorExit value is the exit code when this program fails to parse an
 // input file.
 const ParseErrorExit = 3
 
-// The Parse function parses a QFIDLLIB file, returning the AST. If the parse
-// fails, this function exits with code [ParseErrorExit]. This function also
-// modifies the supplied Configuration with the expected satisfiability state.
-func Parse(cfg *config.Configuration) File {
-	return File{}
+// The Parse function parses a QFIDL-LIB file from an input stream, returning
+// the AST. If the parse fails, this function exits with code [ParseErrorExit].
+func Parse(input io.Reader) (ret *File) {
+
+	// Do the parse
+	ret, err := theParser.Parse("INPUT", input)
+	// If there was an error, print it out and die
+	if err != nil {
+		erp := err.(participle.Error)
+		pos := erp.Position()
+		fmt.Fprintf(
+			os.Stderr,
+			"failed to parse at :%d:%d: %s\n",
+			pos.Line,
+			pos.Column,
+			erp.Message(),
+		)
+		os.Exit(ParseErrorExit)
+	}
+
+	return
 }

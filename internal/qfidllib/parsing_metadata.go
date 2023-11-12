@@ -4,15 +4,26 @@ import (
 	"errors"
 )
 
-// Wrapper to express whether a particular instance is satisfiable or not. This
-// is the general way Golang does enums, it seems.
+// Status is a wrapper to express whether a particular instance is satisfiable
+// or not. This is the general way Golang does enums, it seems.
 type Status int
 
 const (
-	UNSAT   = 0
-	SAT     = 1
-	UNKNOWN = -1
+	UNSAT   = Status(0)
+	SAT     = Status(1)
+	UNKNOWN = Status(-1)
 )
+
+func (stat Status) String() string {
+	switch stat {
+	case UNSAT:
+		return "unsat"
+	case SAT:
+		return "sat"
+	default:
+		return "unknown"
+	}
+}
 
 func (stat *Status) Capture(values []string) error {
 	// We should always get exactly one value, so panic if this doesn't happen
@@ -54,19 +65,15 @@ type Metadata interface {
 type MetadataSource struct {
 	Source Symbol `parser:"'(':ParenOpen 'set-info':Symbol ':source':Attribute @Symbol ')':ParenClose"`
 }
-
 type MetadataLicense struct {
 	License StringLit `parser:"'(':ParenOpen 'set-info':Symbol ':license':Attribute @StringLit ')':ParenClose"`
 }
-
 type MetadataCategory struct {
 	Category StringLit `parser:"'(':ParenOpen 'set-info':Symbol ':category':Attribute @StringLit ')':ParenClose"`
 }
-
 type MetadataStatus struct {
 	Status Status `parser:"'(':ParenOpen 'set-info':Symbol ':status':Attribute @Symbol ')':ParenClose"`
 }
-
 type MetadataNotes struct {
 	Notes Symbol `parser:"'(':ParenOpen 'set-info':Symbol ':notes':Attribute @Symbol ')':ParenClose"`
 }

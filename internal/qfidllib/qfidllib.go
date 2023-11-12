@@ -23,9 +23,9 @@ const ParseErrorExit = 3
 // the AST. If the parse fails, this function exits with code [ParseErrorExit].
 func Parse(input io.Reader) (ret *File) {
 
-	// Do the parse
+	// Do the parse.
 	ret, err := theParser.Parse("INPUT", input)
-	// If there was an error, print it out and die
+	// If there was an error, print it out and die.
 	if err != nil {
 		erp := err.(participle.Error)
 		pos := erp.Position()
@@ -37,6 +37,17 @@ func Parse(input io.Reader) (ret *File) {
 			erp.Message(),
 		)
 		os.Exit(ParseErrorExit)
+	}
+
+	// Check that the logic type is QF_IDL. We can't work with anything else.
+	if ret.Logic != "QF_IDL" {
+		fmt.Fprintf(os.Stderr, "failed to parse: expected logic to be 'QF_IDL', not '%s'\n", ret.Logic)
+		os.Exit(ParseErrorExit)
+	}
+	// Check that we got a footer. The parser should make sure that the field is
+	// true, so panic if that's not the case.
+	if !ret.Footer {
+		panic("Should have a footer")
 	}
 
 	return

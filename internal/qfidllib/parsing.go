@@ -26,8 +26,8 @@ type File struct {
 	// is ignored, but it may be useful in the future.
 	Version Version `parser:"'(':ParenOpen 'set-info':Symbol ':smt-lib-version':Attribute @VersionNum ')':ParenClose"`
 	// The Logic field gives the logic the file was written with. We only
-	// support QF_IDL, and we reject anything that doesn't declare that type at
-	// parse-time.
+	// support QF_IDL, and we will reject anything that doesn't declare that
+	// type, even if it is otherwise valid.
 	Logic Symbol `parser:"'(':ParenOpen 'set-logic':Symbol @Symbol ')':ParenClose"`
 
 	// This holds all the metadata entries given in the file. These correspond

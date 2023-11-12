@@ -16,11 +16,23 @@ var theParser = participle.MustBuild[File](
 		MetadataStatus{},
 		MetadataNotes{},
 	),
+
+	// The order here is important. We always want to parse atoms before formula
+	// building operators so that valid integer expressions aren't flagged as
+	// errors. We also want to parse expressions with specified symbols before
+	// those that leave the symbols unspecified. This is because we have
+	// operations as just regular symbols, and we don't always check in the
+	// grammar rules whether the symbols work.
 	participle.Union[Formula](
 		LitAtom{},
 		VarAtom{},
 		EqualityAtom{},
 		DiffAtom{},
+		NotBuilder{},
+		ITEBuilder{},
+		LetBuilder{},
+		EqualityBuilder{},
+		OperationBuilder{},
 	),
 )
 

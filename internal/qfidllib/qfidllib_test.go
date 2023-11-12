@@ -74,6 +74,53 @@ func TestBasicParsing(t *testing.T) {
 			(check-sat)
 			(exit)
 		`),
+		"not": []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(assert (not x))
+			(assert (not (not x)))
+			(assert (not (distinct x y)))
+			(assert (not (>= (- x y) (- 5))))
+			(check-sat)
+			(exit)
+		`),
+		"ite": []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(assert (ite x y z))
+			(assert (ite (not x) y (distinct x y)))
+			(check-sat)
+			(exit)
+		`),
+		"equality": []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(assert (= x y z))
+			(assert (distinct x y z))
+			(assert (= x (>= (- y z) 5)))
+			(check-sat)
+			(exit)
+		`),
+		"operations": []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(assert (and x y))
+			(assert (and x y z))
+			(assert (or x y z))
+			(assert (xor x y z))
+			(assert (=> x y z))
+			(assert (and x (distinct y z w) (>= (- a b) 5)))
+			(check-sat)
+			(exit)
+		`),
+		"let": []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(assert (let ((x y) (z w)) k))
+			(assert (let ((x y) (z w)) (>= (- a b) 5)))
+			(check-sat)
+			(exit)
+		`),
 	}
 
 	for name, test := range tests {
@@ -92,6 +139,69 @@ func TestBasicParsing(t *testing.T) {
 			// tests, so we can check for it
 			if ret.Logic != "QF_IDL" {
 				t.Error("bad logic")
+			}
+		})
+	}
+}
+
+func TestStatusParsing(t *testing.T) {
+	tests := map[string]struct {
+		data   []byte
+		status Status
+	}{
+		"sat_simple": {data: []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(set-info :status sat)
+			(check-sat)
+			(exit)
+		`), status: StatusSat},
+		"sat_complex": {data: []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(set-info :status |sat|)
+			(check-sat)
+			(exit)
+		`), status: StatusSat},
+		"unsat_simple": {data: []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(set-info :status unsat)
+			(check-sat)
+			(exit)
+		`), status: StatusUnsat},
+		"unsat_complex": {data: []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(set-info :status |unsat|)
+			(check-sat)
+			(exit)
+		`), status: StatusUnsat},
+	}
+
+	for name, test := range tests {
+		test := test
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			// Try to parse. We don't use the wrapped parse method since it
+			// exits on failure.
+			ret, err := theParser.ParseBytes("TEST", test.data)
+			// Check that the parse actually succeeded
+			if err != nil {
+				t.Error("parser returned error")
+			}
+			// Check that the status was parsed correctly. This means it has the
+			// correct type and that its value is correct.
+			if len(ret.Metadata) == 0 {
+				t.Error("did not get any metadata")
+			}
+			status, ok := ret.Metadata[0].(MetadataStatus)
+			if !ok {
+				t.Error("got bad metadata type")
+			}
+			if status.Status != test.status {
+				t.Error("incorrect parse")
 			}
 		})
 	}
@@ -204,6 +314,103 @@ func TestStringParsing(t *testing.T) {
 			}
 			if license.License != StringLit(test.value) {
 				t.Error("incorrect parse")
+			}
+		})
+	}
+}
+
+func TestEqualityParsing(t *testing.T) {
+	atoms := map[string][]byte{
+		"equality": []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(assert (= x y))
+			(check-sat)
+			(exit)
+		`),
+		"inequality": []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(assert (distinct x y))
+			(check-sat)
+			(exit)
+		`),
+	}
+	builders := map[string][]byte{
+		"equality": []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(assert (= x y z))
+			(check-sat)
+			(exit)
+		`),
+		"inequality": []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(assert (distinct x y z))
+			(check-sat)
+			(exit)
+		`),
+		"complex_equality": []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(assert (= x (= y z)))
+			(check-sat)
+			(exit)
+		`),
+		"complex_inequality": []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(assert (distinct x (>= (- y z) (- 5))))
+			(check-sat)
+			(exit)
+		`),
+	}
+
+	// Check that simple equality expressions are parsed as atoms.
+	for name, test := range atoms {
+		test := test
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			// Try to parse. We don't use the wrapped parse method since it
+			// exits on failure.
+			ret, err := theParser.ParseBytes("TEST", test)
+			// Check that the parse actually succeeded
+			if err != nil {
+				t.Error("parser returned error")
+			}
+			// Check that the equality was parsed as an atom.
+			if len(ret.Assertions) == 0 {
+				t.Error("did not get any assertions")
+			}
+			_, ok := ret.Assertions[0].(EqualityAtom)
+			if !ok {
+				t.Error("got bad equality type")
+			}
+		})
+	}
+
+	// Check that complex equality expressions are parsed as builders.
+	for name, test := range builders {
+		test := test
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			// Try to parse. We don't use the wrapped parse method since it
+			// exits on failure.
+			ret, err := theParser.ParseBytes("TEST", test)
+			// Check that the parse actually succeeded
+			if err != nil {
+				t.Error("parser returned error")
+			}
+			// Check that the equality was parsed as a builder.
+			if len(ret.Assertions) == 0 {
+				t.Error("did not get any assertions")
+			}
+			_, ok := ret.Assertions[0].(EqualityBuilder)
+			if !ok {
+				t.Error("got bad equality type")
 			}
 		})
 	}

@@ -7,6 +7,22 @@ import (
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
+// Enumeration constants for [DiffOp], [BoolOp], [EqualityOp]. Not all the
+// operations are present since some of them are handled with custom parse
+// rules.
+const (
+	DiffOpLE = iota
+	DiffOpLT
+	DiffOpGE
+	DiffOpGT
+	BoolOpIMP
+	BoolOpAND
+	BoolOpOR
+	BoolOpXOR
+	OpEQ
+	OpNE
+)
+
 // The Formula interface expresses all of the well-formed-formulas we can
 // express in QF_IDL.
 type Formula interface {
@@ -34,28 +50,19 @@ func (a VarAtom) formula() {}
 // Recall that difference atoms are of the form (op (- x y) n).
 type DiffOp int
 
-const (
-	LE = iota
-	LT
-	GE
-	GT
-	EQ
-	NE
-)
-
 func (d DiffOp) String() string {
 	switch d {
-	case LE:
+	case DiffOpLE:
 		return "<="
-	case LT:
+	case DiffOpLT:
 		return "<"
-	case GE:
+	case DiffOpGE:
 		return ">="
-	case GT:
+	case DiffOpGT:
 		return ">"
-	case EQ:
+	case OpEQ:
 		return "="
-	case NE:
+	case OpNE:
 		return "distinct"
 	default:
 		panic("Invalid difference operation")
@@ -71,22 +78,22 @@ func (d *DiffOp) Capture(values []string) error {
 	// invalid.
 	switch value := values[0]; value {
 	case "<=":
-		*d = LE
+		*d = DiffOpLE
 		return nil
 	case "<":
-		*d = LT
+		*d = DiffOpLT
 		return nil
 	case ">=":
-		*d = GE
+		*d = DiffOpGE
 		return nil
 	case ">":
-		*d = GT
+		*d = DiffOpGT
 		return nil
 	case "=":
-		*d = EQ
+		*d = OpEQ
 		return nil
 	case "distinct":
-		*d = NE
+		*d = OpNE
 		return nil
 	default:
 		return errors.New("invalid difference operation '" + value + "'")
@@ -162,9 +169,9 @@ type EqualityOp int
 
 func (e EqualityOp) String() string {
 	switch e {
-	case EQ:
+	case OpEQ:
 		return "="
-	case NE:
+	case OpNE:
 		return "distinct"
 	default:
 		panic("Invalid equality operation")
@@ -180,10 +187,10 @@ func (e *EqualityOp) Capture(values []string) error {
 	// invalid.
 	switch value := values[0]; value {
 	case "=":
-		*e = EQ
+		*e = OpEQ
 		return nil
 	case "distinct":
-		*e = NE
+		*e = OpNE
 		return nil
 	default:
 		return errors.New("invalid equality operation '" + value + "'")
@@ -194,10 +201,115 @@ func (e *EqualityOp) Capture(values []string) error {
 // between two symbols. The operation is given by an [EqualityOp]. These can
 // apply to both Bool and Int arguments, and well-sortedness is checked later.
 type EqualityAtom struct {
-	Operation EqualityOp `parser:"'(':ParenOpen @Symbol"`
+	Operation EqualityOp `parser:"'(':ParenOpen @( '=':Symbol | 'distinct':Symbol )"`
 	LHS       Symbol     `parser:"@Symbol"`
 	RHS       Symbol     `parser:"@Symbol ')':ParenClose"`
 	Pos       lexer.Position
 }
 
 func (a EqualityAtom) formula() {}
+
+// NotBuilder represents the formula building operator for boolean negation. It
+// only takes one argument - the thing to negate.
+type NotBuilder struct {
+	Argument Formula `parser:"'(':ParenOpen 'not':Symbol @@ ')':ParenClose"`
+}
+
+// ITEBuilder is the formula building operator for if-then-else. It takes
+// exactly three arguments because anything else doesn't really make sense.
+type ITEBuilder struct {
+	If   Formula `parser:"'(':ParenOpen 'ite':Symbol @@"`
+	Then Formula `parser:"@@"`
+	Else Formula `parser:"@@ ')':ParenClose"`
+}
+
+// EqualityBuilder represents a formula building operator that asserts the
+// equality or disequality between some subformulas. This is distinct from
+// [EqualityAtom] since that:
+//   - Can only be between two symbols
+//   - Can work on either integers or booleans
+//
+// We should always try to parse an [EqualityAtom] first, so that legal integer
+// comparisons don't get rejected.
+type EqualityBuilder struct {
+	Operation   EqualityOp `parser:"'(':ParenOpen @( '=':Symbol | 'distinct':Symbol )"`
+	Subformulas []Formula  `parser:"@@ @@+ ')':ParenClose"`
+}
+
+func (b NotBuilder) formula()      {}
+func (b ITEBuilder) formula()      {}
+func (b EqualityBuilder) formula() {}
+
+// Formula building operator for let expressions. These consist of at least one
+// [LetBinding], and well as the final formula to substitute them into.
+type LetBuilder struct {
+	Bindings   []LetBinding `parser:"'(':ParenOpen 'let':Symbol '(':ParenOpen @@+ ')':ParenClose"`
+	Subformula Formula      `parser:"@@ ')':ParenClose"`
+}
+
+// A single binding for a [LetBuilder] expression. It has a name and what
+// formula that is bound to.
+type LetBinding struct {
+	Name Symbol  `parser:"'(':ParenOpen @Symbol"`
+	Bind Formula `parser:"@@ ')':ParenClose"`
+}
+
+func (b LetBuilder) formula() {}
+
+// The BoolOp type represents the the associative boolean operations - i.e. all
+// the operations we haven't covered so far. This is:
+//   - Impliciation
+//   - AND
+//   - OR
+//   - XOR
+type BoolOp int
+
+func (b BoolOp) String() string {
+	switch b {
+	case BoolOpIMP:
+		return "=>"
+	case BoolOpAND:
+		return "and"
+	case BoolOpOR:
+		return "or"
+	case BoolOpXOR:
+		return "xor"
+	default:
+		panic("Invalid boolean operation")
+	}
+}
+
+func (b *BoolOp) Capture(values []string) error {
+	// We should always get exactly one value, so panic if this doesn't happen
+	if len(values) != 1 {
+		panic("Should have gotten exactly one value")
+	}
+	// Switch on the value we got, and notify the user if they put something
+	// invalid.
+	switch value := values[0]; value {
+	case "=>":
+		*b = BoolOpIMP
+		return nil
+	case "and":
+		*b = BoolOpAND
+		return nil
+	case "or":
+		*b = BoolOpOR
+		return nil
+	case "xor":
+		*b = BoolOpXOR
+		return nil
+	default:
+		return errors.New("invalid boolean operation '" + value + "'")
+	}
+}
+
+// OperationBuilder is a formula building operator that uses [BoolOp] as the
+// operation. All of the operations are associative, and they take at least two
+// arguments.
+type OperationBuilder struct {
+	Operation   BoolOp    `parser:"'(':ParenOpen @Symbol"`
+	Subformulas []Formula `parser:"@@ @@+ ')':ParenClose"`
+}
+
+func (b OperationBuilder) formula() {}

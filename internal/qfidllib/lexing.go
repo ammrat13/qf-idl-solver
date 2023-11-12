@@ -22,7 +22,7 @@ var theLexer = lexer.MustSimple([]lexer.SimpleRule{
 	// but we don't parse floats (decimals in the spec). We also disregard
 	// hexadecimal and binary literals, since QF_IDL doesn't allow them.
 	{Name: "NumberLit", Pattern: `0|[1-9][0-9]*`},
-	{Name: "StringLit", Pattern: `"([^"]|"")+"`},
+	{Name: "StringLit", Pattern: `"([^"]|"")*"`},
 
 	// These rules are to parse simple and complex symbols. Essentially, these
 	// are identifiers and quoted identifiers respectively.

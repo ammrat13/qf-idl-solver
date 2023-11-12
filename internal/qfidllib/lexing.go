@@ -8,7 +8,7 @@ import (
 )
 
 // This variable defines the lexer we use for QFIDL-LIB files
-var theLexer = lexer.MustSimple([]lexer.SimpleRule{
+var Lexer = lexer.MustSimple([]lexer.SimpleRule{
 
 	// These rules match whitespace. The lowercase at the front means these
 	// are elided from the lexer's output.

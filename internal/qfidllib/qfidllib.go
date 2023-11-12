@@ -24,7 +24,7 @@ const ParseErrorExit = 3
 func Parse(input io.Reader) (ret *File) {
 
 	// Do the parse.
-	ret, err := theParser.Parse("INPUT", input)
+	ret, err := Parser.Parse("INPUT", input)
 	// If there was an error, print it out and die.
 	if err != nil {
 		erp := err.(participle.Error)

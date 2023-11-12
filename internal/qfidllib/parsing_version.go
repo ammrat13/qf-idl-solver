@@ -36,7 +36,7 @@ func (v *Version) Capture(values []string) error {
 		// Check if we're actually out of range. If we are, that's a user error
 		// and not a panic
 		if errMaj.(*strconv.NumError).Err == strconv.ErrRange {
-			return errors.New("version " + value + " has out-of-range integers")
+			return errors.New("major version " + components[0] + " is out-of-range")
 		}
 		// Otherwise, it's on us
 		panic("Could not parse integer")
@@ -46,7 +46,7 @@ func (v *Version) Capture(values []string) error {
 	v.Minor, errMin = strconv.ParseUint(components[1], 10, 64)
 	if errMin != nil {
 		if errMin.(*strconv.NumError).Err == strconv.ErrRange {
-			return errors.New("version " + value + " has out-of-range integers")
+			return errors.New("minor version " + components[1] + " is out-of-range")
 		}
 		panic("Could not parse integer")
 	}

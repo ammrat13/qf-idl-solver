@@ -24,20 +24,25 @@ type File struct {
 
 	// The Version field describes the version number declared in the file. This
 	// is ignored, but it may be useful in the future.
-	Version Version `'(' "set-info":Symbol ":smt-lib-version":Attribute @VersionNum ')'`
+	Version Version `parser:"'(':ParenOpen 'set-info':Symbol ':smt-lib-version':Attribute @VersionNum ')':ParenClose"`
 	// The Logic field gives the logic the file was written with. We only
 	// support QF_IDL, and we reject anything that doesn't declare that type at
 	// parse-time.
-	Logic Symbol `'(' "set-logic":Symbol @Symbol ')'`
+	Logic Symbol `parser:"'(':ParenOpen 'set-logic':Symbol @Symbol ')':ParenClose"`
 
 	// This holds all the metadata entries given in the file. These correspond
 	// to all the attributes we declared in the lexer, minus the version.
-	Metadata []Metadata `@@*`
+	Metadata []Metadata `parser:"@@*"`
 
 	// This array holds all of the variable delclarations
-	Declarations []Declaration `@@*`
+	Declarations []Declaration `parser:"@@*"`
 
 	// This array holds all of the assertions for the solver, as they are given
 	// in the AST. Its grammar also captures the check-sat and exit commands.
-	Assertions []Assertion `@@* '(' "check-sat":Symbol ')' '(' "exit":Symbol ')'`
+	Assertions []Assertion `parser:"@@*"`
+
+	// This flag reports whether a footer was present. The footer is a check-sat
+	// command followed by an exit command. The grammar requires that the footer
+	// be present, so this will always be true.
+	Footer bool `parser:"@('(':ParenOpen 'check-sat':Symbol ')':ParenClose '(':ParenOpen 'exit':Symbol ')':ParenClose)"`
 }

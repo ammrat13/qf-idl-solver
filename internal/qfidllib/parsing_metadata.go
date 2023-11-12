@@ -52,23 +52,23 @@ type Metadata interface {
 //go-sumtype:decl Metadata
 
 type MetadataSource struct {
-	Source Symbol `'(' "set-info":Symbol ":source":Attribute @Symbol ')'`
+	Source Symbol `parser:"'(':ParenOpen 'set-info':Symbol ':source':Attribute @Symbol ')':ParenClose"`
 }
 
 type MetadataLicense struct {
-	License StringLit `'(' "set-info":Symbol ":license":Attribute @StringLit ')'`
+	License StringLit `parser:"'(':ParenOpen 'set-info':Symbol ':license':Attribute @StringLit ')':ParenClose"`
 }
 
 type MetadataCategory struct {
-	Category StringLit `'(' "set-info":Symbol ":category":Attribute @StringLit ')'`
+	Category StringLit `parser:"'(':ParenOpen 'set-info':Symbol ':category':Attribute @StringLit ')':ParenClose"`
 }
 
 type MetadataStatus struct {
-	Status Status `'(' "set-info":Symbol ":status":Attribute @Symbol ')'`
+	Status Status `parser:"'(':ParenOpen 'set-info':Symbol ':status':Attribute @Symbol ')':ParenClose"`
 }
 
 type MetadataNotes struct {
-	Notes Symbol `'(' "set-info":Symbol ":notes":Attribute @Symbol ')'`
+	Notes Symbol `parser:"'(':ParenOpen 'set-info':Symbol ':notes':Attribute @Symbol ')':ParenClose"`
 }
 
 func (m MetadataSource) metadata()   {}

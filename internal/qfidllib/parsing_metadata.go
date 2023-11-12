@@ -9,16 +9,16 @@ import (
 type Status int
 
 const (
-	UNSAT   = Status(0)
-	SAT     = Status(1)
-	UNKNOWN = Status(-1)
+	StatusUnsat   = Status(0)
+	StatusSat     = Status(1)
+	StatusUnknown = Status(-1)
 )
 
 func (stat Status) String() string {
 	switch stat {
-	case UNSAT:
+	case StatusUnsat:
 		return "unsat"
-	case SAT:
+	case StatusSat:
 		return "sat"
 	default:
 		return "unknown"
@@ -33,15 +33,15 @@ func (stat *Status) Capture(values []string) error {
 	// Switch on the value we got, and notify the user if they put something
 	// invalid.
 	switch value := values[0]; value {
-	case "sat":
-		fallthrough
-	case "|sat|":
-		*stat = SAT
-		return nil
 	case "unsat":
 		fallthrough
 	case "|unsat|":
-		*stat = UNSAT
+		*stat = StatusUnsat
+		return nil
+	case "sat":
+		fallthrough
+	case "|sat|":
+		*stat = StatusSat
 		return nil
 	default:
 		return errors.New(":status should be either sat or unsat")

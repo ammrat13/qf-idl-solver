@@ -7,7 +7,7 @@ import (
 // This variable defines the parser we will use on QFIDL-LIB input streams. Note
 // the unions. These have to be declared here and below.
 var theParser = participle.MustBuild[File](
-	participle.UseLookahead(2),
+	participle.UseLookahead(5),
 	participle.Lexer(theLexer),
 	participle.Union[Metadata](
 		MetadataSource{},
@@ -15,6 +15,12 @@ var theParser = participle.MustBuild[File](
 		MetadataCategory{},
 		MetadataStatus{},
 		MetadataNotes{},
+	),
+	participle.Union[Formula](
+		LitAtom{},
+		VarAtom{},
+		EqualityAtom{},
+		DiffAtom{},
 	),
 )
 
@@ -38,8 +44,8 @@ type File struct {
 	Declarations []Declaration `parser:"@@*"`
 
 	// This array holds all of the assertions for the solver, as they are given
-	// in the AST. Its grammar also captures the check-sat and exit commands.
-	Assertions []Assertion `parser:"@@*"`
+	// in the AST.
+	Assertions []Formula `parser:"( '(':ParenOpen 'assert':Symbol @@ ')':ParenClose )*"`
 
 	// This flag reports whether a footer was present. The footer is a check-sat
 	// command followed by an exit command. The grammar requires that the footer

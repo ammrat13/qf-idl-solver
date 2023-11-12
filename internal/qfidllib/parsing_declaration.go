@@ -7,15 +7,15 @@ import "errors"
 type Sort int
 
 const (
-	BOOL = Sort(1)
-	INT  = Sort(2)
+	SortBool = iota
+	SortInt
 )
 
 func (sort Sort) String() string {
 	switch sort {
-	case BOOL:
+	case SortBool:
 		return "Bool"
-	case INT:
+	case SortInt:
 		return "Int"
 	default:
 		panic("Invalid sort")
@@ -33,12 +33,12 @@ func (sort *Sort) Capture(values []string) error {
 	case "Bool":
 		fallthrough
 	case "|Bool|":
-		*sort = BOOL
+		*sort = SortBool
 		return nil
 	case "Int":
 		fallthrough
 	case "|Int|":
-		*sort = INT
+		*sort = SortInt
 		return nil
 	default:
 		return errors.New("sort should be either Bool or Int")

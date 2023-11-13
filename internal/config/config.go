@@ -72,10 +72,14 @@ func GetConfiguration() (ret Configuration) {
 // SetupLogging sets the output of the log package depending on whether the user
 // requested logging. If logging is disabled, output is discarded, and it's sent
 // to standard error otherwise.
+//
+// This function also sets the logger's flags, as well as its prefix.
 func (cfg Configuration) SetupLogging() {
 	if !cfg.Log {
 		log.SetOutput(io.Discard)
 	} else {
 		log.SetOutput(os.Stderr)
 	}
+	log.SetFlags(log.Llongfile | log.Lmicroseconds | log.LstdFlags)
+	log.SetPrefix("LOG QF-IDL-SOLVER ")
 }

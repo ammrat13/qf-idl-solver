@@ -7,7 +7,7 @@ import (
 // This variable defines the parser we will use on QFIDL-LIB input streams. Note
 // the unions. These have to be declared here and below.
 var Parser = participle.MustBuild[File](
-	participle.UseLookahead(10),
+	participle.UseLookahead(2),
 	participle.Lexer(Lexer),
 	participle.Union[Metadata](
 		MetadataSource{},
@@ -32,8 +32,8 @@ var Parser = participle.MustBuild[File](
 		CmpDiff{},
 	),
 	participle.Union[DiffExpr](
-		SymbolAtom{},
 		DiffAtom{},
+		SymbolAtom{},
 	),
 )
 

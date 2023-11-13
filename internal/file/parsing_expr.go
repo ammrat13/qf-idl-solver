@@ -2,7 +2,7 @@ package file
 
 import (
 	"errors"
-	"strconv"
+	"math/big"
 
 	"github.com/alecthomas/participle/v2/lexer"
 )
@@ -146,7 +146,9 @@ func (b *BoolOp) Capture(values []string) error {
 
 // Number represents either a positive or negative number. It's wrapped by a
 // [NumberAtom].
-type Number int64
+type Number struct {
+	Value *big.Int
+}
 
 func (n *Number) Capture(values []string) error {
 
@@ -172,23 +174,16 @@ func (n *Number) Capture(values []string) error {
 	}
 
 	// Try to parse the integer.
-	nInt, err := strconv.ParseInt(nStr, 10, 64)
-	if err != nil {
-		// Check if we're actually out of range. If we are, that's a user error
-		// and not a panic
-		if err.(*strconv.NumError).Err == strconv.ErrRange {
-			return errors.New("integer " + nStr + " is out-of-range")
-		}
-		// Otherwise, it's on us
+	nInt, success := new(big.Int).SetString(nStr, 10)
+	if !success {
 		panic("Couldn't parse integer '" + nStr + "'")
 	}
 
 	// Write and return.
 	if neg {
-		*n = Number(-nInt)
-	} else {
-		*n = Number(nInt)
+		nInt.Mul(nInt, new(big.Int).SetInt64(-1))
 	}
+	n.Value = nInt
 	return nil
 }
 

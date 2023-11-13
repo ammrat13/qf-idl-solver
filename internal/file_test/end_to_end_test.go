@@ -16,6 +16,11 @@ const BenchmarkPath = "../../bench/"
 
 func TestBenchmarkParsing(t *testing.T) {
 
+	// This test takes a long time to run
+	if testing.Short() {
+		t.SkipNow()
+	}
+
 	// Find all of the benchmark files
 	filepath.Walk(BenchmarkPath, func(path string, info fs.FileInfo, err error) error {
 

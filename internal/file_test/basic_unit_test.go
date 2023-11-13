@@ -1,26 +1,28 @@
 package file_test
 
 import (
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/ammrat13/qf-idl-solver/internal/file"
 )
 
 func TestBasicParsing(t *testing.T) {
-	tests := map[string][]byte{
-		"smoke": []byte(`
+	tests := map[string]io.Reader{
+		"smoke": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(check-sat)
 			(exit)
 		`),
-		"logic": []byte(`
+		"logic": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic |QF_IDL|)
 			(check-sat)
 			(exit)
 		`),
-		"symbol_attributes": []byte(`
+		"symbol_attributes": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :source ammrat13)
@@ -31,7 +33,7 @@ func TestBasicParsing(t *testing.T) {
 			(check-sat)
 			(exit)
 		`),
-		"string_attributes": []byte(`
+		"string_attributes": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :license "abc")
@@ -42,7 +44,7 @@ func TestBasicParsing(t *testing.T) {
 			(check-sat)
 			(exit)
 		`),
-		"status_attribute": []byte(`
+		"status_attribute": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :status sat)
@@ -52,7 +54,7 @@ func TestBasicParsing(t *testing.T) {
 			(check-sat)
 			(exit)
 		`),
-		"declarations": []byte(`
+		"declarations": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(declare-fun x () Bool)
@@ -62,7 +64,7 @@ func TestBasicParsing(t *testing.T) {
 			(check-sat)
 			(exit)
 		`),
-		"atoms": []byte(`
+		"atoms": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(assert x)
@@ -73,7 +75,7 @@ func TestBasicParsing(t *testing.T) {
 			(check-sat)
 			(exit)
 		`),
-		"not": []byte(`
+		"not": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(assert (not x))
@@ -85,7 +87,7 @@ func TestBasicParsing(t *testing.T) {
 			(check-sat)
 			(exit)
 		`),
-		"ite": []byte(`
+		"ite": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(assert (ite x y z))
@@ -93,7 +95,7 @@ func TestBasicParsing(t *testing.T) {
 			(check-sat)
 			(exit)
 		`),
-		"equality": []byte(`
+		"equality": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(assert (= x y))
@@ -104,7 +106,7 @@ func TestBasicParsing(t *testing.T) {
 			(check-sat)
 			(exit)
 		`),
-		"comparison": []byte(`
+		"comparison": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(assert (> x y))
@@ -115,7 +117,7 @@ func TestBasicParsing(t *testing.T) {
 			(check-sat)
 			(exit)
 		`),
-		"boolean": []byte(`
+		"boolean": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(assert (and x y))
@@ -127,7 +129,7 @@ func TestBasicParsing(t *testing.T) {
 			(check-sat)
 			(exit)
 		`),
-		"let": []byte(`
+		"let": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(assert (let ((x y) (z w)) k))
@@ -142,17 +144,9 @@ func TestBasicParsing(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			// Try to parse. We don't use the wrapped parse method since it
-			// exits on failure.
-			ret, err := file.Parser.ParseBytes("TEST", test)
-			// Check that the parse actually succeeded
+			_, err := file.Parse(test)
 			if err != nil {
-				t.Error("parser returned error")
-			}
-			// Check that we got the correct logic. This is common to all the
-			// tests, so we can check for it
-			if ret.Logic != "QF_IDL" {
-				t.Error("bad logic")
+				t.Errorf("parse error: %s", err.Error())
 			}
 		})
 	}

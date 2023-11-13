@@ -10,39 +10,26 @@ package file
 import (
 	"fmt"
 	"io"
-	"os"
-
-	"github.com/alecthomas/participle/v2"
 )
-
-// The ParseErrorExit value is the exit code when this program fails to parse an
-// input file.
-const ParseErrorExit = 3
 
 // The Parse function parses a QFIDL-LIB file from an input stream, returning
 // the AST. If the parse fails, this function exits with code [ParseErrorExit].
-func Parse(input io.Reader) (ret *File) {
+func Parse(input io.Reader) (ret *File, err error) {
 
 	// Do the parse.
-	ret, err := Parser.Parse("INPUT", input)
-	// If there was an error, print it out and die.
+	ret, err = Parser.Parse("INPUT", input)
+	// If there was an error, return it.
 	if err != nil {
-		erp := err.(participle.Error)
-		pos := erp.Position()
-		fmt.Fprintf(
-			os.Stderr,
-			"failed to parse at :%d:%d: %s\n",
-			pos.Line,
-			pos.Column,
-			erp.Message(),
-		)
-		os.Exit(ParseErrorExit)
+		return
 	}
 
 	// Check that the logic type is QF_IDL. We can't work with anything else.
 	if ret.Logic != "QF_IDL" {
-		fmt.Fprintf(os.Stderr, "failed to parse: expected logic to be 'QF_IDL', not '%s'\n", ret.Logic)
-		os.Exit(ParseErrorExit)
+		err = fmt.Errorf(
+			"failed to parse: expected logic to be 'QF_IDL', not '%s'",
+			ret.Logic,
+		)
+		return
 	}
 	// Check that we got a footer. The parser should make sure that the field is
 	// true, so panic if that's not the case.

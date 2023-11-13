@@ -1,6 +1,8 @@
 package file_test
 
 import (
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/ammrat13/qf-idl-solver/internal/file"
@@ -8,31 +10,31 @@ import (
 
 func TestStatusParsing(t *testing.T) {
 	tests := map[string]struct {
-		data   []byte
+		data   io.Reader
 		status file.Status
 	}{
-		"sat_simple": {data: []byte(`
+		"sat_simple": {data: strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :status sat)
 			(check-sat)
 			(exit)
 		`), status: file.StatusSat},
-		"sat_complex": {data: []byte(`
+		"sat_complex": {data: strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :status |sat|)
 			(check-sat)
 			(exit)
 		`), status: file.StatusSat},
-		"unsat_simple": {data: []byte(`
+		"unsat_simple": {data: strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :status unsat)
 			(check-sat)
 			(exit)
 		`), status: file.StatusUnsat},
-		"unsat_complex": {data: []byte(`
+		"unsat_complex": {data: strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :status |unsat|)
@@ -46,13 +48,12 @@ func TestStatusParsing(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			// Try to parse. We don't use the wrapped parse method since it
-			// exits on failure.
-			ret, err := file.Parser.ParseBytes("TEST", test.data)
-			// Check that the parse actually succeeded
+			ret, err := file.Parse(test.data)
 			if err != nil {
-				t.Error("parser returned error")
+				t.Errorf("parse error: %s", err.Error())
+				t.FailNow()
 			}
+
 			// Check that the status was parsed correctly. This means it has the
 			// correct type and that its value is correct.
 			if len(ret.Metadata) == 0 {
@@ -60,7 +61,7 @@ func TestStatusParsing(t *testing.T) {
 			}
 			status, ok := ret.Metadata[0].(file.MetadataStatus)
 			if !ok {
-				t.Error("got bad metadata type")
+				t.Error("bad type")
 			}
 			if status.Status != test.status {
 				t.Error("incorrect parse")
@@ -71,24 +72,24 @@ func TestStatusParsing(t *testing.T) {
 
 func TestSymbolParsing(t *testing.T) {
 	tests := map[string]struct {
-		data  []byte
+		data  io.Reader
 		value file.Symbol
 	}{
-		"simple": {data: []byte(`
+		"simple": {data: strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :source ammrat13)
 			(check-sat)
 			(exit)
 		`), value: `ammrat13`},
-		"complex_basic": {data: []byte(`
+		"complex_basic": {data: strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :source |ammrat13|)
 			(check-sat)
 			(exit)
 		`), value: `ammrat13`},
-		"complex": {data: []byte(`
+		"complex": {data: strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :source |a b c < "def""|)
@@ -102,13 +103,12 @@ func TestSymbolParsing(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			// Try to parse. We don't use the wrapped parse method since it
-			// exits on failure.
-			ret, err := file.Parser.ParseBytes("TEST", test.data)
-			// Check that the parse actually succeeded
+			ret, err := file.Parse(test.data)
 			if err != nil {
-				t.Error("parser returned error")
+				t.Errorf("parse error: %s", err.Error())
+				t.FailNow()
 			}
+
 			// Check that the source was parsed correctly. This means it has the
 			// correct type and that its value is correct.
 			if len(ret.Metadata) == 0 {
@@ -116,7 +116,7 @@ func TestSymbolParsing(t *testing.T) {
 			}
 			source, ok := ret.Metadata[0].(file.MetadataSource)
 			if !ok {
-				t.Error("got bad metadata type")
+				t.Error("bad type")
 			}
 			if source.Source != test.value {
 				t.Error("incorrect parse")
@@ -127,24 +127,24 @@ func TestSymbolParsing(t *testing.T) {
 
 func TestStringParsing(t *testing.T) {
 	tests := map[string]struct {
-		data  []byte
+		data  io.Reader
 		value file.StringLit
 	}{
-		"simple": {data: []byte(`
+		"simple": {data: strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :license "abc")
 			(check-sat)
 			(exit)
 		`), value: `abc`},
-		"empty": {data: []byte(`
+		"empty": {data: strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :license "")
 			(check-sat)
 			(exit)
 		`), value: ``},
-		"escape": {data: []byte(`
+		"escape": {data: strings.NewReader(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :license "abc""def""")
@@ -158,21 +158,20 @@ func TestStringParsing(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			// Try to parse. We don't use the wrapped parse method since it
-			// exits on failure.
-			ret, err := file.Parser.ParseBytes("TEST", test.data)
-			// Check that the parse actually succeeded
+			ret, err := file.Parse(test.data)
 			if err != nil {
-				t.Error("parser returned error")
+				t.Errorf("parse error: %s", err.Error())
+				t.FailNow()
 			}
-			// Check that the source was parsed correctly. This means it has the
-			// correct type and that its value is correct.
+
+			// Check that the license was parsed correctly. This means it has
+			// the correct type and that its value is correct.
 			if len(ret.Metadata) == 0 {
 				t.Error("did not get any metadata")
 			}
 			license, ok := ret.Metadata[0].(file.MetadataLicense)
 			if !ok {
-				t.Error("got bad metadata type")
+				t.Error("bad type")
 			}
 			if license.License != test.value {
 				t.Error("incorrect parse")
@@ -186,29 +185,29 @@ func TestCmpArgument(t *testing.T) {
 	t.Run("diff", func(t *testing.T) {
 		t.Parallel()
 
-		tests := map[string][]byte{
-			"sym+": []byte(`
+		tests := map[string]io.Reader{
+			"sym+": strings.NewReader(`
 				(set-info :smt-lib-version 2.6)
 				(set-logic QF_IDL)
 				(assert (>= x 5))
 				(check-sat)
 				(exit)
 			`),
-			"sym-": []byte(`
+			"sym-": strings.NewReader(`
 				(set-info :smt-lib-version 2.6)
 				(set-logic QF_IDL)
 				(assert (>= x (- 5)))
 				(check-sat)
 				(exit)
 			`),
-			"diff+": []byte(`
+			"diff+": strings.NewReader(`
 				(set-info :smt-lib-version 2.6)
 				(set-logic QF_IDL)
 				(assert (>= (- x y) 5))
 				(check-sat)
 				(exit)
 			`),
-			"diff-": []byte(`
+			"diff-": strings.NewReader(`
 				(set-info :smt-lib-version 2.6)
 				(set-logic QF_IDL)
 				(assert (>= (- x y) (- 5)))
@@ -223,25 +222,24 @@ func TestCmpArgument(t *testing.T) {
 				t.Parallel()
 				var ok bool
 
-				// Try to parse. We don't use the wrapped parse method since it
-				// exits on failure.
-				ret, err := file.Parser.ParseBytes("TEST", test)
-				// Check that the parse actually succeeded
+				ret, err := file.Parse(test)
 				if err != nil {
-					t.Error("parser returned error")
+					t.Errorf("parser error: %s", err.Error())
+					t.FailNow()
 				}
+
 				// Check that the assertion was parsed correctly. This means its
-				// comparison argument has the correct type.
+				// comparison's argument has the correct type.
 				if len(ret.Assertions) == 0 {
-					t.Error("did not get any metadata")
+					t.Error("did not get any assertions")
 				}
 				cmp, ok := ret.Assertions[0].(file.CmpOpBuilder)
 				if !ok {
-					t.Error("got bad assertion type")
+					t.Error("bad type")
 				}
 				_, ok = cmp.Arguments.(file.CmpDiff)
 				if !ok {
-					t.Error("incorrect comparison argument type")
+					t.Error("incorrect type")
 				}
 			})
 		}
@@ -250,8 +248,8 @@ func TestCmpArgument(t *testing.T) {
 	t.Run("sym", func(t *testing.T) {
 		t.Parallel()
 
-		tests := map[string][]byte{
-			"simple": []byte(`
+		tests := map[string]io.Reader{
+			"simple": strings.NewReader(`
 				(set-info :smt-lib-version 2.6)
 				(set-logic QF_IDL)
 				(assert (>= x y))
@@ -266,25 +264,24 @@ func TestCmpArgument(t *testing.T) {
 				t.Parallel()
 				var ok bool
 
-				// Try to parse. We don't use the wrapped parse method since it
-				// exits on failure.
-				ret, err := file.Parser.ParseBytes("TEST", test)
-				// Check that the parse actually succeeded
+				ret, err := file.Parse(test)
 				if err != nil {
-					t.Error("parser returned error")
+					t.Errorf("parser error: %s", err.Error())
+					t.FailNow()
 				}
+
 				// Check that the assertion was parsed correctly. This means its
-				// comparison argument has the correct type.
+				// comparison's argument has the correct type.
 				if len(ret.Assertions) == 0 {
-					t.Error("did not get any metadata")
+					t.Error("did not get any assertions")
 				}
 				cmp, ok := ret.Assertions[0].(file.CmpOpBuilder)
 				if !ok {
-					t.Error("got bad assertion type")
+					t.Error("bad type")
 				}
 				_, ok = cmp.Arguments.(file.CmpSym)
 				if !ok {
-					t.Error("incorrect comparison argument type")
+					t.Error("incorrect type")
 				}
 			})
 		}

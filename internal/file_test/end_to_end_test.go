@@ -38,25 +38,14 @@ func TestBenchmarkParsing(t *testing.T) {
 		t.Run(path, func(t *testing.T) {
 			t.Parallel()
 
-			// Try to open the file.
 			bench, err := os.Open(path)
 			if err != nil {
 				t.SkipNow()
 			}
 
-			// Try to parse.
-			ret, err := file.Parser.Parse(path, bench)
-
-			// Check for errors.
+			_, err = file.Parse(bench)
 			if err != nil {
-				t.Logf("parse error: %v", err)
-				t.FailNow()
-			}
-			if ret.Logic != "QF_IDL" {
-				t.Error("bad logic")
-			}
-			if !ret.Footer {
-				t.Error("no footer")
+				t.Errorf("parse error: %s", err.Error())
 			}
 		})
 		return nil

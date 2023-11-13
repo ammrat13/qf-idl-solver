@@ -17,8 +17,8 @@ import (
 // on the fly.
 type DB struct {
 
-	// The clauses variable stores the CNF form of what we want to satisfy.
-	clauses [][]AtomLit
+	// The Clauses variable stores the CNF form of what we want to satisfy.
+	Clauses [][]AtomLit
 
 	// The id2diff map goes from atom identifiers to [DifferenceAtom] in the
 	// problem. If an ID doesn't show up in the domain, it has no

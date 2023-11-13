@@ -54,7 +54,7 @@ func FromFile(ast file.File) (db DB, err error) {
 			return
 		}
 		// If it was, add it to the list of constraints
-		db.clauses = append(db.clauses, []AtomLit{valLit.lit})
+		db.Clauses = append(db.Clauses, []AtomLit{valLit.lit})
 	}
 
 	return
@@ -158,8 +158,8 @@ func (db *DB) processExpr(ex file.Expr, ctx context) (ret parsedExpr, err error)
 		// Create a new atom that we will return, then install it in clauses
 		// that execute the if-then-else.
 		retAtom := db.getNewAtom()
-		db.clauses = append(
-			db.clauses,
+		db.Clauses = append(
+			db.Clauses,
 			[]AtomLit{-litI.lit, -litT.lit, retAtom.Positive()},
 			[]AtomLit{-litI.lit, litT.lit, retAtom.Negative()},
 			[]AtomLit{litI.lit, -litE.lit, retAtom.Positive()},

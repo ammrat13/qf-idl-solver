@@ -7,7 +7,7 @@ import (
 // This variable defines the parser we will use on QFIDL-LIB input streams. Note
 // the unions. These have to be declared here and below.
 var Parser = participle.MustBuild[File](
-	participle.UseLookahead(5),
+	participle.UseLookahead(10),
 	participle.Lexer(Lexer),
 	participle.Union[Metadata](
 		MetadataSource{},
@@ -16,23 +16,24 @@ var Parser = participle.MustBuild[File](
 		MetadataStatus{},
 		MetadataNotes{},
 	),
-
-	// The order here is important. We always want to parse atoms before formula
-	// building operators so that valid integer expressions aren't flagged as
-	// errors. We also want to parse expressions with specified symbols before
-	// those that leave the symbols unspecified. This is because we have
-	// operations as just regular symbols, and we don't always check in the
-	// grammar rules whether the symbols work.
-	participle.Union[Formula](
-		LitAtom{},
-		VarAtom{},
-		EqualityAtom{},
+	participle.Union[Expr](
+		NumberAtom{},
+		SymbolAtom{},
 		DiffAtom{},
 		NotBuilder{},
 		ITEBuilder{},
+		EquOpBuilder{},
+		CmpOpBuilder{},
+		BoolOpBuilder{},
 		LetBuilder{},
-		EqualityBuilder{},
-		OperationBuilder{},
+	),
+	participle.Union[CmpArguments](
+		CmpSym{},
+		CmpDiff{},
+	),
+	participle.Union[DiffExpr](
+		SymbolAtom{},
+		DiffAtom{},
 	),
 )
 
@@ -57,7 +58,7 @@ type File struct {
 
 	// This array holds all of the assertions for the solver, as they are given
 	// in the AST.
-	Assertions []Formula `parser:"( '(':ParenOpen 'assert':Symbol @@ ')':ParenClose )*"`
+	Assertions []Expr `parser:"( '(':ParenOpen 'assert':Symbol @@ ')':ParenClose )*"`
 
 	// This flag reports whether a footer was present. The footer is a check-sat
 	// command followed by an exit command. The grammar requires that the footer

@@ -44,7 +44,8 @@ func TestBenchmarkParsing(t *testing.T) {
 
 			// Check for errors.
 			if err != nil {
-				t.Errorf("parse error: %v", err)
+				t.Logf("parse error: %v", err)
+				t.FailNow()
 			}
 			if ret.Logic != "QF_IDL" {
 				t.Error("bad logic")

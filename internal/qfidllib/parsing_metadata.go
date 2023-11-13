@@ -1,9 +1,5 @@
 package qfidllib
 
-import (
-	"errors"
-)
-
 // Status is a wrapper to express whether a particular instance is satisfiable
 // or not. This is the general way Golang does enums, it seems.
 type Status int
@@ -30,22 +26,21 @@ func (stat *Status) Capture(values []string) error {
 	if len(values) != 1 {
 		panic("Should have gotten exactly one value")
 	}
-	// Switch on the value we got, and notify the user if they put something
-	// invalid.
+	// Switch on the value we got. If we don't recognize the value, mark it as
+	// unknown.
 	switch value := values[0]; value {
 	case "unsat":
 		fallthrough
 	case "|unsat|":
 		*stat = StatusUnsat
-		return nil
 	case "sat":
 		fallthrough
 	case "|sat|":
 		*stat = StatusSat
-		return nil
 	default:
-		return errors.New(":status should be either sat or unsat")
+		*stat = StatusUnknown
 	}
+	return nil
 }
 
 // The Metadata interface models the possible annotations on QFIDL-LIB files.

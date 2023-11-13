@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/ammrat13/qf-idl-solver/internal/config"
-	"github.com/ammrat13/qf-idl-solver/internal/qfidllib"
+	"github.com/ammrat13/qf-idl-solver/internal/file"
 )
 
 func main() {
@@ -16,6 +16,6 @@ func main() {
 	log.Printf("Got configuration: %v\n", cfg)
 
 	// Parse the input file
-	ast := qfidllib.Parse(cfg.Input)
+	ast := file.Parse(cfg.Input)
 	log.Printf("Got AST: %v\n", ast)
 }

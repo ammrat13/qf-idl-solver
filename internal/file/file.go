@@ -1,11 +1,11 @@
-// Package parse takes an input stream and outputs an AST. It also provides the
-// types to interface with the generated tree.
+// Package file takes an input stream and outputs an AST for the file. It also
+// provides the types to interface with the generated tree.
 //
-// The parser here is for a subset of SMTLIB, called QFIDL-LIB. Not all SMT-LIB
-// files will be handled by this, and it may throw an error. Additionally,
-// QFIDL-LIB is more permissive than SMT-LIB in some aspects. See grammar.go for
-// more details about what is accepted.
-package qfidllib
+// The parser here is for a subset of SMT-LIB. Not all SMT-LIB files will be
+// handled by this, and it may throw an error. Additionally, this grammar is
+// more permissive than SMT-LIB in some aspects. See grammar.go for more details
+// about what is accepted.
+package file
 
 import (
 	"fmt"

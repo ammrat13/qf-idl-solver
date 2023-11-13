@@ -1,4 +1,4 @@
-package qfidllib
+package file
 
 // Status is a wrapper to express whether a particular instance is satisfiable
 // or not. This is the general way Golang does enums, it seems.

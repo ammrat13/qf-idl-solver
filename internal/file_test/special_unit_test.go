@@ -1,15 +1,15 @@
-package qfidllib_test
+package file_test
 
 import (
 	"testing"
 
-	"github.com/ammrat13/qf-idl-solver/internal/qfidllib"
+	"github.com/ammrat13/qf-idl-solver/internal/file"
 )
 
 func TestStatusParsing(t *testing.T) {
 	tests := map[string]struct {
 		data   []byte
-		status qfidllib.Status
+		status file.Status
 	}{
 		"sat_simple": {data: []byte(`
 			(set-info :smt-lib-version 2.6)
@@ -17,28 +17,28 @@ func TestStatusParsing(t *testing.T) {
 			(set-info :status sat)
 			(check-sat)
 			(exit)
-		`), status: qfidllib.StatusSat},
+		`), status: file.StatusSat},
 		"sat_complex": {data: []byte(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :status |sat|)
 			(check-sat)
 			(exit)
-		`), status: qfidllib.StatusSat},
+		`), status: file.StatusSat},
 		"unsat_simple": {data: []byte(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :status unsat)
 			(check-sat)
 			(exit)
-		`), status: qfidllib.StatusUnsat},
+		`), status: file.StatusUnsat},
 		"unsat_complex": {data: []byte(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(set-info :status |unsat|)
 			(check-sat)
 			(exit)
-		`), status: qfidllib.StatusUnsat},
+		`), status: file.StatusUnsat},
 	}
 
 	for name, test := range tests {
@@ -48,7 +48,7 @@ func TestStatusParsing(t *testing.T) {
 
 			// Try to parse. We don't use the wrapped parse method since it
 			// exits on failure.
-			ret, err := qfidllib.Parser.ParseBytes("TEST", test.data)
+			ret, err := file.Parser.ParseBytes("TEST", test.data)
 			// Check that the parse actually succeeded
 			if err != nil {
 				t.Error("parser returned error")
@@ -58,7 +58,7 @@ func TestStatusParsing(t *testing.T) {
 			if len(ret.Metadata) == 0 {
 				t.Error("did not get any metadata")
 			}
-			status, ok := ret.Metadata[0].(qfidllib.MetadataStatus)
+			status, ok := ret.Metadata[0].(file.MetadataStatus)
 			if !ok {
 				t.Error("got bad metadata type")
 			}
@@ -72,7 +72,7 @@ func TestStatusParsing(t *testing.T) {
 func TestSymbolParsing(t *testing.T) {
 	tests := map[string]struct {
 		data  []byte
-		value qfidllib.Symbol
+		value file.Symbol
 	}{
 		"simple": {data: []byte(`
 			(set-info :smt-lib-version 2.6)
@@ -104,7 +104,7 @@ func TestSymbolParsing(t *testing.T) {
 
 			// Try to parse. We don't use the wrapped parse method since it
 			// exits on failure.
-			ret, err := qfidllib.Parser.ParseBytes("TEST", test.data)
+			ret, err := file.Parser.ParseBytes("TEST", test.data)
 			// Check that the parse actually succeeded
 			if err != nil {
 				t.Error("parser returned error")
@@ -114,7 +114,7 @@ func TestSymbolParsing(t *testing.T) {
 			if len(ret.Metadata) == 0 {
 				t.Error("did not get any metadata")
 			}
-			source, ok := ret.Metadata[0].(qfidllib.MetadataSource)
+			source, ok := ret.Metadata[0].(file.MetadataSource)
 			if !ok {
 				t.Error("got bad metadata type")
 			}
@@ -128,7 +128,7 @@ func TestSymbolParsing(t *testing.T) {
 func TestStringParsing(t *testing.T) {
 	tests := map[string]struct {
 		data  []byte
-		value qfidllib.StringLit
+		value file.StringLit
 	}{
 		"simple": {data: []byte(`
 			(set-info :smt-lib-version 2.6)
@@ -160,7 +160,7 @@ func TestStringParsing(t *testing.T) {
 
 			// Try to parse. We don't use the wrapped parse method since it
 			// exits on failure.
-			ret, err := qfidllib.Parser.ParseBytes("TEST", test.data)
+			ret, err := file.Parser.ParseBytes("TEST", test.data)
 			// Check that the parse actually succeeded
 			if err != nil {
 				t.Error("parser returned error")
@@ -170,7 +170,7 @@ func TestStringParsing(t *testing.T) {
 			if len(ret.Metadata) == 0 {
 				t.Error("did not get any metadata")
 			}
-			license, ok := ret.Metadata[0].(qfidllib.MetadataLicense)
+			license, ok := ret.Metadata[0].(file.MetadataLicense)
 			if !ok {
 				t.Error("got bad metadata type")
 			}

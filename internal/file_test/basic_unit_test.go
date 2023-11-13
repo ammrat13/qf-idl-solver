@@ -1,9 +1,9 @@
-package qfidllib_test
+package file_test
 
 import (
 	"testing"
 
-	"github.com/ammrat13/qf-idl-solver/internal/qfidllib"
+	"github.com/ammrat13/qf-idl-solver/internal/file"
 )
 
 func TestBasicParsing(t *testing.T) {
@@ -132,7 +132,7 @@ func TestBasicParsing(t *testing.T) {
 
 			// Try to parse. We don't use the wrapped parse method since it
 			// exits on failure.
-			ret, err := qfidllib.Parser.ParseBytes("TEST", test)
+			ret, err := file.Parser.ParseBytes("TEST", test)
 			// Check that the parse actually succeeded
 			if err != nil {
 				t.Error("parser returned error")

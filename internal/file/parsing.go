@@ -1,4 +1,4 @@
-package qfidllib
+package file
 
 import (
 	"github.com/alecthomas/participle/v2"

@@ -1,4 +1,4 @@
-package qfidllib_test
+package file_test
 
 import (
 	"io/fs"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ammrat13/qf-idl-solver/internal/qfidllib"
+	"github.com/ammrat13/qf-idl-solver/internal/file"
 )
 
 // The BenchmarkPath is the relative path to the benchmarks from the directory
@@ -40,7 +40,7 @@ func TestBenchmarkParsing(t *testing.T) {
 			}
 
 			// Try to parse.
-			ret, err := qfidllib.Parser.Parse(path, bench)
+			ret, err := file.Parser.Parse(path, bench)
 
 			// Check for errors.
 			if err != nil {

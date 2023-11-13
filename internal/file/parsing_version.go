@@ -1,4 +1,4 @@
-package qfidllib
+package file
 
 import (
 	"errors"

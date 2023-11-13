@@ -18,8 +18,8 @@ var Parser = participle.MustBuild[File](
 	),
 	participle.Union[Expr](
 		NumberAtom{},
-		SymbolAtom{},
 		DiffAtom{},
+		SymbolAtom{},
 		NotBuilder{},
 		ITEBuilder{},
 		EquOpBuilder{},

@@ -65,14 +65,11 @@ func TestBasicParsing(t *testing.T) {
 		"atoms": []byte(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
-			(assert true)
-			(assert false)
 			(assert x)
 			(assert |x|)
-			(assert (> (- x y) 0))
-			(assert (>= (- x y) (- 0)))
-			(assert (= x y))
-			(assert (distinct x y))
+			(assert 5)
+			(assert (- 5))
+			(assert (- x y))
 			(check-sat)
 			(exit)
 		`),
@@ -82,6 +79,8 @@ func TestBasicParsing(t *testing.T) {
 			(assert (not x))
 			(assert (not (not x)))
 			(assert (not (distinct x y)))
+			(assert (not (>= x 5)))
+			(assert (not (>= x (- 5))))
 			(assert (not (>= (- x y) (- 5))))
 			(check-sat)
 			(exit)
@@ -90,20 +89,33 @@ func TestBasicParsing(t *testing.T) {
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(assert (ite x y z))
-			(assert (ite (not x) y (distinct x y)))
+			(assert (ite (not x) y (distinct x y z)))
 			(check-sat)
 			(exit)
 		`),
 		"equality": []byte(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
-			(assert (= x y z))
+			(assert (= x y))
+			(assert (= x y z w))
 			(assert (distinct x y z))
 			(assert (= x (>= (- y z) 5)))
+			(assert (= x (>= (- y z) (- 5))))
 			(check-sat)
 			(exit)
 		`),
-		"operations": []byte(`
+		"comparison": []byte(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(assert (> x y))
+			(assert (<= x 5))
+			(assert (<= x (- 5)))
+			(assert (>= (- x y) 5))
+			(assert (>= (- x y) (- 5)))
+			(check-sat)
+			(exit)
+		`),
+		"boolean": []byte(`
 			(set-info :smt-lib-version 2.6)
 			(set-logic QF_IDL)
 			(assert (and x y))

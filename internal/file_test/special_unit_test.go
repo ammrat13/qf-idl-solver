@@ -180,3 +180,113 @@ func TestStringParsing(t *testing.T) {
 		})
 	}
 }
+
+func TestCmpArgument(t *testing.T) {
+
+	t.Run("diff", func(t *testing.T) {
+		t.Parallel()
+
+		tests := map[string][]byte{
+			"sym+": []byte(`
+				(set-info :smt-lib-version 2.6)
+				(set-logic QF_IDL)
+				(assert (>= x 5))
+				(check-sat)
+				(exit)
+			`),
+			"sym-": []byte(`
+				(set-info :smt-lib-version 2.6)
+				(set-logic QF_IDL)
+				(assert (>= x (- 5)))
+				(check-sat)
+				(exit)
+			`),
+			"diff+": []byte(`
+				(set-info :smt-lib-version 2.6)
+				(set-logic QF_IDL)
+				(assert (>= (- x y) 5))
+				(check-sat)
+				(exit)
+			`),
+			"diff-": []byte(`
+				(set-info :smt-lib-version 2.6)
+				(set-logic QF_IDL)
+				(assert (>= (- x y) (- 5)))
+				(check-sat)
+				(exit)
+			`),
+		}
+
+		for name, test := range tests {
+			test := test
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+				var ok bool
+
+				// Try to parse. We don't use the wrapped parse method since it
+				// exits on failure.
+				ret, err := file.Parser.ParseBytes("TEST", test)
+				// Check that the parse actually succeeded
+				if err != nil {
+					t.Error("parser returned error")
+				}
+				// Check that the assertion was parsed correctly. This means its
+				// comparison argument has the correct type.
+				if len(ret.Assertions) == 0 {
+					t.Error("did not get any metadata")
+				}
+				cmp, ok := ret.Assertions[0].(file.CmpOpBuilder)
+				if !ok {
+					t.Error("got bad assertion type")
+				}
+				_, ok = cmp.Arguments.(file.CmpDiff)
+				if !ok {
+					t.Error("incorrect comparison argument type")
+				}
+			})
+		}
+	})
+
+	t.Run("sym", func(t *testing.T) {
+		t.Parallel()
+
+		tests := map[string][]byte{
+			"simple": []byte(`
+				(set-info :smt-lib-version 2.6)
+				(set-logic QF_IDL)
+				(assert (>= x y))
+				(check-sat)
+				(exit)
+			`),
+		}
+
+		for name, test := range tests {
+			test := test
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+				var ok bool
+
+				// Try to parse. We don't use the wrapped parse method since it
+				// exits on failure.
+				ret, err := file.Parser.ParseBytes("TEST", test)
+				// Check that the parse actually succeeded
+				if err != nil {
+					t.Error("parser returned error")
+				}
+				// Check that the assertion was parsed correctly. This means its
+				// comparison argument has the correct type.
+				if len(ret.Assertions) == 0 {
+					t.Error("did not get any metadata")
+				}
+				cmp, ok := ret.Assertions[0].(file.CmpOpBuilder)
+				if !ok {
+					t.Error("got bad assertion type")
+				}
+				_, ok = cmp.Arguments.(file.CmpSym)
+				if !ok {
+					t.Error("incorrect comparison argument type")
+				}
+			})
+		}
+	})
+}

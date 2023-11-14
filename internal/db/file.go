@@ -31,14 +31,22 @@ func FromFile(ast file.File) (db DB, err error) {
 	ctx.Names = make(map[string]expr)
 	ctx.Parent = nil
 	// Add true and false to the root context.
-	err = ctx.AddName("true", exprLit{Lit: db.NewAtom()})
+	tt := exprLit{Lit: db.NewAtom()}
+	ff := exprLit{Lit: db.NewAtom()}
+	err = ctx.AddName("true", tt)
 	if err != nil {
 		panic("Couldn't add true")
 	}
-	err = ctx.AddName("false", exprLit{Lit: -db.NewAtom()})
+	err = ctx.AddName("false", ff)
 	if err != nil {
 		panic("Couldn't add false")
 	}
+	// Assert true and false
+	db.AddClauses(
+		[]Lit{tt.Lit},
+		[]Lit{-ff.Lit},
+	)
+
 	// Add all the other declarations. Add literals for booleans and variables
 	// for integers.
 	for _, decl := range ast.Declarations {

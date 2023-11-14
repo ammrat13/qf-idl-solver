@@ -107,16 +107,19 @@ func (db *DB) processExpr(e file.Expr, ctx context) (ret expr, err error) {
 	switch ex := e.(type) {
 
 	case file.NumberAtom:
+		log.Println("  Is NumberAtom")
 		// If it's a raw number, just return it
 		return exprConst{Val: ex.Num.Value}, nil
 
 	case file.SymbolAtom:
+		log.Println("  Is SymbolAtom")
 		// If it's a symbol, look it up and return it. Error if we can't find
 		// it.
 		ret, err = ctx.LookupAt(string(ex.Name), e.Position())
 		return
 
 	case file.DiffAtom:
+		log.Println("  Is DiffAtom")
 		var eX, eY expr
 		var vX, vY exprVar
 		nameX := string(ex.LHS)
@@ -145,18 +148,23 @@ func (db *DB) processExpr(e file.Expr, ctx context) (ret expr, err error) {
 		return exprDiff{X: vX.Var, Y: vY.Var}, nil
 
 	case file.NotBuilder:
+		log.Println("  Is NotBuilder")
 		return db.processNot(ex, ctx)
 
 	case file.ITEBuilder:
+		log.Println("  Is ITEBuilder")
 		return db.processITE(ex, ctx)
 
 	case file.EquOpBuilder:
+		log.Println("  Is EquOpBuilder")
+
 		// Process the first argument.
 		var a0 expr
 		a0, err = db.processExpr(ex.Arguments[0], ctx)
 		if err != nil {
 			return
 		}
+
 		// Look at the first argument's type to determine what kind of equality
 		// expression this is.
 		switch a0.(type) {
@@ -176,12 +184,15 @@ func (db *DB) processExpr(e file.Expr, ctx context) (ret expr, err error) {
 		}
 
 	case file.BoolOpBuilder:
+		log.Println("  Is BoolOpBuilder")
 		return db.processBoolOp(ex, ctx)
 
 	case file.CmpOpBuilder:
+		log.Println("  Is CmpOpBuilder")
 		return db.processCmpOp(ex, ctx)
 
 	case file.LetBuilder:
+		log.Println("  Is LetBuilder")
 		return db.processLet(ex, ctx)
 
 	}

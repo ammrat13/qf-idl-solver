@@ -253,6 +253,10 @@ func (b ITEBuilder) expr()                       {}
 func (b EquOpBuilder) expr()                     {}
 func (b BoolOpBuilder) expr()                    {}
 
+// CmpOpBuilder is the formula building operator for relational symbols, which
+// are all the operations we can do on numbers except for equality. Its syntax
+// is quite restrictive. Its arguments are described by [CmpArguments], which
+// can either be two symbols or a difference expression and a number.
 type CmpOpBuilder struct {
 	Operation CmpOp        `parser:"'(':ParenOpen @( '<=':Symbol | '<':Symbol | '>=':Symbol | '>':Symbol )"`
 	Arguments CmpArguments `parser:"@@ ')':ParenClose"`
@@ -263,6 +267,8 @@ type CmpArguments interface {
 	cmpArguments()
 }
 
+//go-sumtype:decl CmpArguments
+
 type CmpDiff struct {
 	Difference DiffExpr   `parser:"@@"`
 	Constant   NumberAtom `parser:"@@"`
@@ -272,8 +278,6 @@ type CmpSym struct {
 	LHS Symbol `parser:"@Symbol"`
 	RHS Symbol `parser:"@Symbol"`
 }
-
-//go-sumtype:decl CmpArguments
 
 func (b CmpOpBuilder) Position() lexer.Position { return b.Pos }
 func (b CmpOpBuilder) expr()                    {}
@@ -326,7 +330,7 @@ func (a SymbolAtom) diffExpr()                {}
 // grammar has no support for negative numbers, so they are built with the
 // negation operator.
 type NumberAtom struct {
-	Num Number `parser:"( @NumberLit | '(':ParenOpen @( '-':Symbol NumberLit ) ')':ParenClose )"`
+	Num Number `parser:"( @Numeral | '(':ParenOpen @( '-':Symbol Numeral ) ')':ParenClose )"`
 	Pos lexer.Position
 }
 

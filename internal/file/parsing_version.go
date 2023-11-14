@@ -14,7 +14,7 @@ type Version struct {
 	Minor uint64
 }
 
-func (v *Version) Capture(values []string) error {
+func (v *Version) Capture(values []string) (err error) {
 
 	// We should've gotten exactly one value, so panic if that isn't the case
 	if len(values) != 1 {
@@ -30,22 +30,20 @@ func (v *Version) Capture(values []string) error {
 
 	// Parse each component individually, and die if we can't. First the major
 	// component.
-	var errMaj error
-	v.Major, errMaj = strconv.ParseUint(components[0], 10, 64)
-	if errMaj != nil {
+	v.Major, err = strconv.ParseUint(components[0], 10, 64)
+	if err != nil {
 		// Check if we're actually out of range. If we are, that's a user error
 		// and not a panic
-		if errMaj.(*strconv.NumError).Err == strconv.ErrRange {
+		if err.(*strconv.NumError).Err == strconv.ErrRange {
 			return errors.New("major version " + components[0] + " is out-of-range")
 		}
 		// Otherwise, it's on us
 		panic("Could not parse integer")
 	}
 	// Then the minor in the same way.
-	var errMin error
-	v.Minor, errMin = strconv.ParseUint(components[1], 10, 64)
-	if errMin != nil {
-		if errMin.(*strconv.NumError).Err == strconv.ErrRange {
+	v.Minor, err = strconv.ParseUint(components[1], 10, 64)
+	if err != nil {
+		if err.(*strconv.NumError).Err == strconv.ErrRange {
 			return errors.New("minor version " + components[1] + " is out-of-range")
 		}
 		panic("Could not parse integer")

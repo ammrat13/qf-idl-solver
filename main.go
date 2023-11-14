@@ -41,7 +41,7 @@ func main() {
 			)
 		} else {
 			// Otherwise, treat it like a normal error.
-			fmt.Fprintln(os.Stderr, err.Error())
+			fmt.Fprintf(os.Stderr, "failed to parse: %s\n", err.Error())
 		}
 		// In either case, exit with error.
 		os.Exit(ParseErrorExit)
@@ -51,12 +51,7 @@ func main() {
 	// Convert it to CNF.
 	db, err := db.FromFile(*ast)
 	if err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"failed to construct database from '%s': %s\n",
-			cfg.InputName,
-			err.Error(),
-		)
+		fmt.Fprintf(os.Stderr, "failed to construct database: %s\n", err.Error())
 		os.Exit(DatabaseConstructionErrorExit)
 	}
 	log.Printf("Got DB: %v\n", db)

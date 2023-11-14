@@ -1,10 +1,10 @@
 // Package file takes an input stream and outputs an AST for the file. It also
 // provides the types to interface with the generated tree.
 //
-// The parser here is for a subset of SMT-LIB. Not all SMT-LIB files will be
-// handled by this, and it may throw an error. Additionally, this grammar is
-// more permissive than SMT-LIB in some aspects. See grammar.go for more details
-// about what is accepted.
+// The parser here is for a subset of SMT-LIB. It is more restrictive in most
+// aspects, but more permissive in others. See grammar.go for more details about
+// what is accepted. Most of the QF_IDL benchmarks parse correctly. It just
+// doesn't support atoms of the form (op x (+ y c)).
 package file
 
 import (
@@ -12,8 +12,8 @@ import (
 	"io"
 )
 
-// The Parse function parses a QFIDL-LIB file from an input stream, returning
-// the AST. If the parse fails, this function exits with code [ParseErrorExit].
+// The Parse function parses an input stream, returning the AST. If the parse
+// fails, this function exits with the appropriate err.
 func Parse(input io.Reader) (ret *File, err error) {
 
 	// Do the parse.
@@ -26,7 +26,7 @@ func Parse(input io.Reader) (ret *File, err error) {
 	// Check that the logic type is QF_IDL. We can't work with anything else.
 	if ret.Logic != "QF_IDL" {
 		err = fmt.Errorf(
-			"failed to parse: expected logic to be 'QF_IDL', not '%s'",
+			"expected logic to be 'QF_IDL', not '%s'",
 			ret.Logic,
 		)
 		return

@@ -1,7 +1,6 @@
 package file
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/alecthomas/participle/v2/lexer"
@@ -14,14 +13,14 @@ var Lexer = lexer.MustSimple([]lexer.SimpleRule{
 	// are elided from the lexer's output.
 	{Name: "whitespace", Pattern: `[ \t\n\r]+`},
 
-	// Pparse the version number. This is a special case since identifiers can
+	// Parse the version number. This is a special case since identifiers can
 	// start with a dot. Also, this has to come before we parse numbers because
 	// rules are processed in order.
-	{Name: "VersionNum", Pattern: `(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)`},
+	{Name: "Version", Pattern: `(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)`},
 	// These are to parse literals. We parse integer and string literals,
 	// but we don't parse floats (decimals in the spec). We also disregard
 	// hexadecimal and binary literals, since QF_IDL doesn't allow them.
-	{Name: "NumberLit", Pattern: `0|[1-9][0-9]*`},
+	{Name: "Numeral", Pattern: `0|[1-9][0-9]*`},
 	{Name: "StringLit", Pattern: `"([^"]|"")*"`},
 
 	// These rules are to parse simple and complex symbols. Essentially, these
@@ -87,31 +86,4 @@ func (str *StringLit) Capture(values []string) error {
 	// marks.
 	*str = StringLit(strings.Replace(value[1:len(value)-1], "\"\"", "\"", -1))
 	return nil
-}
-
-// BoolLit is a wrapper type around symbols. These are expected to be either
-// true or false, and it's a user error if that's not the case.
-type BooleanLit bool
-
-func (b *BooleanLit) Capture(values []string) error {
-	// We should always get exactly one value, so panic if this doesn't happen
-	if len(values) != 1 {
-		panic("Should have gotten exactly one value")
-	}
-	// Switch on the value we got, and check that it is valid. The input is a
-	// raw symbol, so the user may have entered something else. Check for that,
-	switch value := values[0]; value {
-	case "true":
-		fallthrough
-	case "|true|":
-		*b = BooleanLit(true)
-		return nil
-	case "false":
-		fallthrough
-	case "|false|":
-		*b = BooleanLit(false)
-		return nil
-	default:
-		return errors.New("boolean literal should be either true or false")
-	}
 }

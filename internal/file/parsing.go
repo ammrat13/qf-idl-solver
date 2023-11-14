@@ -43,7 +43,7 @@ type File struct {
 
 	// The Version field describes the version number declared in the file. This
 	// is ignored, but it may be useful in the future.
-	Version Version `parser:"'(':ParenOpen 'set-info':Symbol ':smt-lib-version':Attribute @VersionNum ')':ParenClose"`
+	Version Version `parser:"'(':ParenOpen 'set-info':Symbol ':smt-lib-version':Attribute @Version ')':ParenClose"`
 	// The Logic field gives the logic the file was written with. We only
 	// support QF_IDL, and we will reject anything that doesn't declare that
 	// type, even if it is otherwise valid.

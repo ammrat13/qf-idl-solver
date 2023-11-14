@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -49,10 +50,13 @@ func main() {
 	log.Printf("Got AST: %v\n", ast)
 
 	// Convert it to CNF.
+	var cnfBuf bytes.Buffer
 	db, err := db.FromFile(*ast)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to construct database: %s\n", err.Error())
 		os.Exit(DatabaseConstructionErrorExit)
 	}
 	log.Printf("Got DB: %v\n", db)
+	db.Clauses.Write(&cnfBuf)
+	log.Printf("Got CNF: %q\n", cnfBuf.String())
 }

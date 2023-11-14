@@ -21,20 +21,20 @@ type expr interface {
 //go-sumtype:decl expr
 
 type exprConst struct {
-	val *big.Int
+	Val *big.Int
 }
 
 type exprVar struct {
-	vr VariableID
+	Var VariableID
 }
 
 type exprDiff struct {
-	x VariableID
-	y VariableID
+	X VariableID
+	Y VariableID
 }
 
 type exprLit struct {
-	lit Lit
+	Lit Lit
 }
 
 // The convertExpr function tries to convert an [expr] to one of its subtypes,
@@ -128,4 +128,12 @@ func (ctx context) LookupAt(name string, pos lexer.Position) (ret expr, err erro
 	}
 	// Done
 	return
+}
+
+// The MakeChild method creates a child of the current context with no names.
+func (ctx context) MakeChild() context {
+	return context{
+		Names:  make(map[string]expr),
+		Parent: &ctx,
+	}
 }

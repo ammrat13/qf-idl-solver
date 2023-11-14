@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ammrat13/qf-idl-solver/internal/db"
 	"github.com/ammrat13/qf-idl-solver/internal/file"
 )
 
@@ -16,7 +17,7 @@ import (
 // the tests are run. This should be bench/.
 const BenchmarkPath = "../../bench/"
 
-func TestBenchmarkParsing(t *testing.T) {
+func TestBenchmarkDatabase(t *testing.T) {
 
 	// Disable logging
 	log.SetOutput(io.Discard)
@@ -48,9 +49,16 @@ func TestBenchmarkParsing(t *testing.T) {
 				t.SkipNow()
 			}
 
-			_, err = file.Parse(bench)
+			ast, err := file.Parse(bench)
 			if err != nil {
 				t.Errorf("parse error: %s", err.Error())
+				t.FailNow()
+			}
+
+			_, err = db.FromFile(*ast)
+			if err != nil {
+				t.Errorf("conversion error: %s", err.Error())
+				t.FailNow()
 			}
 		})
 		return nil

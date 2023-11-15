@@ -37,11 +37,11 @@ type DB struct {
 	// The AtomIDToDiff map goes from atom identifiers to [DifferenceConstraint]
 	// in the problem. If an ID doesn't show up in the domain, it has no
 	// [DifferenceConstraint] associated with it, and it's just a boolean.
-	AtomID2Diff map[AtomID]DifferenceConstraint
+	AtomID2Diff map[AtomID]*DifferenceConstraint
 	// The DiffToAtomID map goes in the opposite direction from [AtomIDToDiff].
 	// If a [DifferenceConstraint] doesn't show up in the domain, it has no
 	// associated ID, and is invalid.
-	Diff2AtomID map[DifferenceConstraint]AtomID
+	Diff2AtomID map[*DifferenceConstraint]AtomID
 }
 
 // The AddClauses method adds a set of clauses to the solver. We wrap this
@@ -124,14 +124,14 @@ type DifferenceConstraint struct {
 // value it either found or created.
 func (db *DB) GetAtomForDiff(c DifferenceConstraint) (ret AtomID) {
 	// Check to see if we already have an ID for this constraint.
-	ret, found := db.Diff2AtomID[c]
+	ret, found := db.Diff2AtomID[&c]
 	if found {
 		return
 	}
 	// Otherwise, create a new atom and associate it with this difference
 	// constraint.
 	ret = db.NewAtom()
-	db.AtomID2Diff[ret] = c
-	db.Diff2AtomID[c] = ret
+	db.AtomID2Diff[ret] = &c
+	db.Diff2AtomID[&c] = ret
 	return
 }

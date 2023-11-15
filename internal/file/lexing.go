@@ -1,4 +1,4 @@
-//go:generate bash -c "participle gen lexer file <(go run scripts/lexerdump.go) --name=Gen --output=lexer_gen.go"
+//go:generate bash -c "participle gen lexer file <(go run scripts/lexerdump.go) --name=Gen --output=lexing_gen.go"
 package file
 
 import (

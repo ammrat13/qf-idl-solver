@@ -1,4 +1,3 @@
-//go:generate bash -c "participle gen lexer file <(go run scripts/lexerdump.go) --name=Gen --output=lexing_gen.go"
 package file
 
 import (
@@ -7,7 +6,10 @@ import (
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
-// This variable defines the lexer we use for QFIDL-LIB files
+// This variable defines the lexer we use for QFIDL-LIB files. It is used to
+// generate an optimized version.
+//
+//go:generate bash -c "participle gen lexer file <(go run scripts/lexerdump.go) --name=Gen --output=lexing_gen.go"
 var Lexer = lexer.MustSimple([]lexer.SimpleRule{
 
 	{Name: "ParenOpen", Pattern: `\(`},

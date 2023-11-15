@@ -1,5 +1,7 @@
 // This script dumps the lexer in lexing.go. It outputs the JSON to standard
 // output.
+//
+// See: lexing.go
 
 //go:build ignore
 

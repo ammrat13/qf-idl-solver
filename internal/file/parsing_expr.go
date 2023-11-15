@@ -11,13 +11,13 @@ import (
 // operations are present since some of them are handled with custom parse
 // rules.
 const (
-	EquOpEQ = iota
+	EquOpEQ EquOp = iota
 	EquOpNE
-	CmpOpLE
+	CmpOpLE CmpOp = iota
 	CmpOpLT
 	CmpOpGE
 	CmpOpGT
-	BoolOpIMP
+	BoolOpIMP BoolOp = iota
 	BoolOpAND
 	BoolOpOR
 	BoolOpXOR

@@ -5,9 +5,9 @@ package file
 type Status int
 
 const (
-	StatusUnsat   = Status(0)
-	StatusSat     = Status(1)
-	StatusUnknown = Status(-1)
+	StatusUnsat Status = iota
+	StatusSat
+	StatusUnknown
 )
 
 func (stat Status) String() string {

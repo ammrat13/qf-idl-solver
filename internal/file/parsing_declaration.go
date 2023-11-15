@@ -7,7 +7,7 @@ import "errors"
 type Sort int
 
 const (
-	SortBool = iota
+	SortBool Sort = iota
 	SortInt
 )
 

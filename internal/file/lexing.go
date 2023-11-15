@@ -1,3 +1,4 @@
+//go:generate bash -c "participle gen lexer file <(go run scripts/lexerdump.go) --name=Gen --output=lexer_gen.go"
 package file
 
 import (
@@ -9,9 +10,8 @@ import (
 // This variable defines the lexer we use for QFIDL-LIB files
 var Lexer = lexer.MustSimple([]lexer.SimpleRule{
 
-	// These rules match whitespace. The lowercase at the front means these
-	// are elided from the lexer's output.
-	{Name: "whitespace", Pattern: `[ \t\n\r]+`},
+	// These rules match whitespace.
+	{Name: "Whitespace", Pattern: `[ \t\n\r]+`},
 
 	// Parse the version number. This is a special case since identifiers can
 	// start with a dot. Also, this has to come before we parse numbers because

@@ -8,7 +8,8 @@ import (
 // the unions. These have to be declared here and below.
 var Parser = participle.MustBuild[File](
 	participle.UseLookahead(2),
-	participle.Lexer(Lexer),
+	participle.Elide("Whitespace"),
+	participle.Lexer(GenLexer),
 	participle.Union[Metadata](
 		MetadataSource{},
 		MetadataLicense{},

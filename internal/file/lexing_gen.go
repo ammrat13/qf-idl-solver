@@ -24,15 +24,15 @@ type lexerGenDefinitionImpl struct {}
 
 func (lexerGenDefinitionImpl) Symbols() map[string]lexer.TokenType {
 	return map[string]lexer.TokenType{
-      "Attribute": -7,
+      "Attribute": -8,
       "EOF": -1,
-      "Numeral": -4,
-      "ParenClose": -9,
-      "ParenOpen": -8,
-      "StringLit": -5,
-      "Symbol": -6,
-      "Version": -3,
-      "Whitespace": -2,
+      "Numeral": -7,
+      "ParenClose": -3,
+      "ParenOpen": -2,
+      "StringLit": -9,
+      "Symbol": -5,
+      "Version": -6,
+      "Whitespace": -4,
 	}
 }
 
@@ -83,28 +83,28 @@ func (l *lexerGenImpl) Next() (lexer.Token, error) {
 		sym lexer.TokenType
 	)
 	switch state.name {
-	case "Root":if match := matchGenWhitespace(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
+	case "Root":if match := matchGenParenOpen(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
 			sym = -2
 			groups = match[:]
-		} else if match := matchGenVersion(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
+		} else if match := matchGenParenClose(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
 			sym = -3
 			groups = match[:]
-		} else if match := matchGenNumeral(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
+		} else if match := matchGenWhitespace(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
 			sym = -4
 			groups = match[:]
-		} else if match := matchGenStringLit(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
+		} else if match := matchGenSymbol(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
 			sym = -5
 			groups = match[:]
-		} else if match := matchGenSymbol(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
+		} else if match := matchGenVersion(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
 			sym = -6
 			groups = match[:]
-		} else if match := matchGenAttribute(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
+		} else if match := matchGenNumeral(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
 			sym = -7
 			groups = match[:]
-		} else if match := matchGenParenOpen(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
+		} else if match := matchGenAttribute(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
 			sym = -8
 			groups = match[:]
-		} else if match := matchGenParenClose(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
+		} else if match := matchGenStringLit(l.s, l.p, l.states[len(l.states)-1].groups); match[1] != 0 {
 			sym = -9
 			groups = match[:]
 		}
@@ -134,6 +134,24 @@ func (l *lexerGenImpl) sgroups(match []int) []string {
 	}
 	return sgroups
 }
+// \(
+func matchGenParenOpen(s string, p int, backrefs []string) (groups [2]int) {
+if p < len(s) && s[p] == '(' {
+groups[0] = p
+groups[1] = p + 1
+}
+return
+}
+
+// \)
+func matchGenParenClose(s string, p int, backrefs []string) (groups [2]int) {
+if p < len(s) && s[p] == ')' {
+groups[0] = p
+groups[1] = p + 1
+}
+return
+}
+
 // [\t-\n\r ]+
 func matchGenWhitespace(s string, p int, backrefs []string) (groups [2]int) {
 // [\t-\n\r ] (CharClass)
@@ -156,6 +174,103 @@ if np := l0(s, p); np == -1 { return p } else { p = np }
 return p
 }
 np := l1(s, p)
+if np == -1 {
+  return
+}
+groups[0] = p
+groups[1] = np
+return
+}
+
+// [!\$-&\*-\+\--/<-Z\^-_a-z~][!\$-&\*-\+\--9<-Z\^-_a-z~]*|\|[^\\\|]*\|
+func matchGenSymbol(s string, p int, backrefs []string) (groups [2]int) {
+// [!\$-&\*-\+\--/<-Z\^-_a-z~] (CharClass)
+l0 := func(s string, p int) int {
+if len(s) <= p { return -1 }
+rn := s[p]
+switch {
+case rn == '!': return p+1
+case rn >= '$' && rn <= '&': return p+1
+case rn >= '*' && rn <= '+': return p+1
+case rn >= '-' && rn <= '/': return p+1
+case rn >= '<' && rn <= 'Z': return p+1
+case rn >= '^' && rn <= '_': return p+1
+case rn >= 'a' && rn <= 'z': return p+1
+case rn == '~': return p+1
+}
+return -1
+}
+// [!\$-&\*-\+\--9<-Z\^-_a-z~] (CharClass)
+l1 := func(s string, p int) int {
+if len(s) <= p { return -1 }
+rn := s[p]
+switch {
+case rn == '!': return p+1
+case rn >= '$' && rn <= '&': return p+1
+case rn >= '*' && rn <= '+': return p+1
+case rn >= '-' && rn <= '9': return p+1
+case rn >= '<' && rn <= 'Z': return p+1
+case rn >= '^' && rn <= '_': return p+1
+case rn >= 'a' && rn <= 'z': return p+1
+case rn == '~': return p+1
+}
+return -1
+}
+// [!\$-&\*-\+\--9<-Z\^-_a-z~]* (Star)
+l2 := func(s string, p int) int {
+for len(s) > p {
+if np := l1(s, p); np == -1 { return p } else { p = np }
+}
+return p
+}
+// [!\$-&\*-\+\--/<-Z\^-_a-z~][!\$-&\*-\+\--9<-Z\^-_a-z~]* (Concat)
+l3 := func(s string, p int) int {
+if p = l0(s, p); p == -1 { return -1 }
+if p = l2(s, p); p == -1 { return -1 }
+return p
+}
+// \| (Literal)
+l4 := func(s string, p int) int {
+if p < len(s) && s[p] == '|' { return p+1 }
+return -1
+}
+// [^\\\|] (CharClass)
+l5 := func(s string, p int) int {
+if len(s) <= p { return -1 }
+var (rn rune; n int)
+if s[p] < utf8.RuneSelf {
+  rn, n = rune(s[p]), 1
+} else {
+  rn, n = utf8.DecodeRuneInString(s[p:])
+}
+switch {
+case rn >= '\x00' && rn <= '[': return p+1
+case rn >= ']' && rn <= '{': return p+1
+case rn >= '}' && rn <= '\U0010ffff': return p+n
+}
+return -1
+}
+// [^\\\|]* (Star)
+l6 := func(s string, p int) int {
+for len(s) > p {
+if np := l5(s, p); np == -1 { return p } else { p = np }
+}
+return p
+}
+// \|[^\\\|]*\| (Concat)
+l7 := func(s string, p int) int {
+if p = l4(s, p); p == -1 { return -1 }
+if p = l6(s, p); p == -1 { return -1 }
+if p = l4(s, p); p == -1 { return -1 }
+return p
+}
+// [!\$-&\*-\+\--/<-Z\^-_a-z~][!\$-&\*-\+\--9<-Z\^-_a-z~]*|\|[^\\\|]*\| (Alternate)
+l8 := func(s string, p int) int {
+if np := l3(s, p); np != -1 { return np }
+if np := l7(s, p); np != -1 { return np }
+return -1
+}
+np := l8(s, p)
 if np == -1 {
   return
 }
@@ -290,167 +405,6 @@ groups[1] = np
 return
 }
 
-// "([^"]|"")*"
-func matchGenStringLit(s string, p int, backrefs []string) (groups [4]int) {
-// " (Literal)
-l0 := func(s string, p int) int {
-if p < len(s) && s[p] == '"' { return p+1 }
-return -1
-}
-// [^"] (CharClass)
-l1 := func(s string, p int) int {
-if len(s) <= p { return -1 }
-var (rn rune; n int)
-if s[p] < utf8.RuneSelf {
-  rn, n = rune(s[p]), 1
-} else {
-  rn, n = utf8.DecodeRuneInString(s[p:])
-}
-switch {
-case rn >= '\x00' && rn <= '!': return p+1
-case rn >= '#' && rn <= '\U0010ffff': return p+n
-}
-return -1
-}
-// "" (Literal)
-l2 := func(s string, p int) int {
-if p+2 <= len(s) && s[p:p+2] == "\"\"" { return p+2 }
-return -1
-}
-// [^"]|"" (Alternate)
-l3 := func(s string, p int) int {
-if np := l1(s, p); np != -1 { return np }
-if np := l2(s, p); np != -1 { return np }
-return -1
-}
-// ([^"]|"") (Capture)
-l4 := func(s string, p int) int {
-np := l3(s, p)
-if np != -1 {
-  groups[2] = p
-  groups[3] = np
-}
-return np}
-// ([^"]|"")* (Star)
-l5 := func(s string, p int) int {
-for len(s) > p {
-if np := l4(s, p); np == -1 { return p } else { p = np }
-}
-return p
-}
-// "([^"]|"")*" (Concat)
-l6 := func(s string, p int) int {
-if p = l0(s, p); p == -1 { return -1 }
-if p = l5(s, p); p == -1 { return -1 }
-if p = l0(s, p); p == -1 { return -1 }
-return p
-}
-np := l6(s, p)
-if np == -1 {
-  return
-}
-groups[0] = p
-groups[1] = np
-return
-}
-
-// \|[^\\\|]*\||[!\$-&\*-\+\--/<-Z\^-_a-z~][!\$-&\*-\+\--9<-Z\^-_a-z~]*
-func matchGenSymbol(s string, p int, backrefs []string) (groups [2]int) {
-// \| (Literal)
-l0 := func(s string, p int) int {
-if p < len(s) && s[p] == '|' { return p+1 }
-return -1
-}
-// [^\\\|] (CharClass)
-l1 := func(s string, p int) int {
-if len(s) <= p { return -1 }
-var (rn rune; n int)
-if s[p] < utf8.RuneSelf {
-  rn, n = rune(s[p]), 1
-} else {
-  rn, n = utf8.DecodeRuneInString(s[p:])
-}
-switch {
-case rn >= '\x00' && rn <= '[': return p+1
-case rn >= ']' && rn <= '{': return p+1
-case rn >= '}' && rn <= '\U0010ffff': return p+n
-}
-return -1
-}
-// [^\\\|]* (Star)
-l2 := func(s string, p int) int {
-for len(s) > p {
-if np := l1(s, p); np == -1 { return p } else { p = np }
-}
-return p
-}
-// \|[^\\\|]*\| (Concat)
-l3 := func(s string, p int) int {
-if p = l0(s, p); p == -1 { return -1 }
-if p = l2(s, p); p == -1 { return -1 }
-if p = l0(s, p); p == -1 { return -1 }
-return p
-}
-// [!\$-&\*-\+\--/<-Z\^-_a-z~] (CharClass)
-l4 := func(s string, p int) int {
-if len(s) <= p { return -1 }
-rn := s[p]
-switch {
-case rn == '!': return p+1
-case rn >= '$' && rn <= '&': return p+1
-case rn >= '*' && rn <= '+': return p+1
-case rn >= '-' && rn <= '/': return p+1
-case rn >= '<' && rn <= 'Z': return p+1
-case rn >= '^' && rn <= '_': return p+1
-case rn >= 'a' && rn <= 'z': return p+1
-case rn == '~': return p+1
-}
-return -1
-}
-// [!\$-&\*-\+\--9<-Z\^-_a-z~] (CharClass)
-l5 := func(s string, p int) int {
-if len(s) <= p { return -1 }
-rn := s[p]
-switch {
-case rn == '!': return p+1
-case rn >= '$' && rn <= '&': return p+1
-case rn >= '*' && rn <= '+': return p+1
-case rn >= '-' && rn <= '9': return p+1
-case rn >= '<' && rn <= 'Z': return p+1
-case rn >= '^' && rn <= '_': return p+1
-case rn >= 'a' && rn <= 'z': return p+1
-case rn == '~': return p+1
-}
-return -1
-}
-// [!\$-&\*-\+\--9<-Z\^-_a-z~]* (Star)
-l6 := func(s string, p int) int {
-for len(s) > p {
-if np := l5(s, p); np == -1 { return p } else { p = np }
-}
-return p
-}
-// [!\$-&\*-\+\--/<-Z\^-_a-z~][!\$-&\*-\+\--9<-Z\^-_a-z~]* (Concat)
-l7 := func(s string, p int) int {
-if p = l4(s, p); p == -1 { return -1 }
-if p = l6(s, p); p == -1 { return -1 }
-return p
-}
-// \|[^\\\|]*\||[!\$-&\*-\+\--/<-Z\^-_a-z~][!\$-&\*-\+\--9<-Z\^-_a-z~]* (Alternate)
-l8 := func(s string, p int) int {
-if np := l3(s, p); np != -1 { return np }
-if np := l7(s, p); np != -1 { return np }
-return -1
-}
-np := l8(s, p)
-if np == -1 {
-  return
-}
-groups[0] = p
-groups[1] = np
-return
-}
-
 // :[!\$-&\*-\+\--/<-Z\^-_a-z~][!\$-&\*-\+\--9<-Z\^-_a-z~]*
 func matchGenAttribute(s string, p int, backrefs []string) (groups [2]int) {
 // : (Literal)
@@ -513,20 +467,66 @@ groups[1] = np
 return
 }
 
-// \(
-func matchGenParenOpen(s string, p int, backrefs []string) (groups [2]int) {
-if p < len(s) && s[p] == '(' {
+// "([^"]|"")*"
+func matchGenStringLit(s string, p int, backrefs []string) (groups [4]int) {
+// " (Literal)
+l0 := func(s string, p int) int {
+if p < len(s) && s[p] == '"' { return p+1 }
+return -1
+}
+// [^"] (CharClass)
+l1 := func(s string, p int) int {
+if len(s) <= p { return -1 }
+var (rn rune; n int)
+if s[p] < utf8.RuneSelf {
+  rn, n = rune(s[p]), 1
+} else {
+  rn, n = utf8.DecodeRuneInString(s[p:])
+}
+switch {
+case rn >= '\x00' && rn <= '!': return p+1
+case rn >= '#' && rn <= '\U0010ffff': return p+n
+}
+return -1
+}
+// "" (Literal)
+l2 := func(s string, p int) int {
+if p+2 <= len(s) && s[p:p+2] == "\"\"" { return p+2 }
+return -1
+}
+// [^"]|"" (Alternate)
+l3 := func(s string, p int) int {
+if np := l1(s, p); np != -1 { return np }
+if np := l2(s, p); np != -1 { return np }
+return -1
+}
+// ([^"]|"") (Capture)
+l4 := func(s string, p int) int {
+np := l3(s, p)
+if np != -1 {
+  groups[2] = p
+  groups[3] = np
+}
+return np}
+// ([^"]|"")* (Star)
+l5 := func(s string, p int) int {
+for len(s) > p {
+if np := l4(s, p); np == -1 { return p } else { p = np }
+}
+return p
+}
+// "([^"]|"")*" (Concat)
+l6 := func(s string, p int) int {
+if p = l0(s, p); p == -1 { return -1 }
+if p = l5(s, p); p == -1 { return -1 }
+if p = l0(s, p); p == -1 { return -1 }
+return p
+}
+np := l6(s, p)
+if np == -1 {
+  return
+}
 groups[0] = p
-groups[1] = p + 1
-}
-return
-}
-
-// \)
-func matchGenParenClose(s string, p int, backrefs []string) (groups [2]int) {
-if p < len(s) && s[p] == ')' {
-groups[0] = p
-groups[1] = p + 1
-}
+groups[1] = np
 return
 }

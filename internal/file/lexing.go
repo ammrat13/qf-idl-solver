@@ -10,28 +10,28 @@ import (
 // This variable defines the lexer we use for QFIDL-LIB files
 var Lexer = lexer.MustSimple([]lexer.SimpleRule{
 
-	// These rules match whitespace.
+	{Name: "ParenOpen", Pattern: `\(`},
+	{Name: "ParenClose", Pattern: `\)`},
 	{Name: "Whitespace", Pattern: `[ \t\n\r]+`},
+
+	// These rules are to parse simple and complex symbols. Essentially, these
+	// are identifiers and quoted identifiers respectively.
+	{Name: "Symbol", Pattern: `[A-Za-z~!@$%^&*_\-+=<>.?\/][A-Za-z0-9~!@$%^&*_\-+=<>.?\/]*|\|[^|\\]*\|`},
 
 	// Parse the version number. This is a special case since identifiers can
 	// start with a dot. Also, this has to come before we parse numbers because
 	// rules are processed in order.
 	{Name: "Version", Pattern: `(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)`},
-	// These are to parse literals. We parse integer and string literals,
-	// but we don't parse floats (decimals in the spec). We also disregard
-	// hexadecimal and binary literals, since QF_IDL doesn't allow them.
+	// These are to parse integer literals. We don't parse floats (decimals in
+	// the spec). We also disregard hexadecimal and binary literals, since
+	// QF_IDL doesn't allow them.
 	{Name: "Numeral", Pattern: `0|[1-9][0-9]*`},
-	{Name: "StringLit", Pattern: `"([^"]|"")*"`},
 
-	// These rules are to parse simple and complex symbols. Essentially, these
-	// are identifiers and quoted identifiers respectively.
-	{Name: "Symbol", Pattern: `\|[^|\\]*\||[A-Za-z~!@$%^&*_\-+=<>.?\/][A-Za-z0-9~!@$%^&*_\-+=<>.?\/]*`},
 	// This rule parses attributes (keywords in the spec).
 	{Name: "Attribute", Pattern: `:[A-Za-z~!@$%^&*_\-+=<>.?\/][A-Za-z0-9~!@$%^&*_\-+=<>.?\/]*`},
-
-	// Finally, match parentheses.
-	{Name: "ParenOpen", Pattern: `\(`},
-	{Name: "ParenClose", Pattern: `\)`},
+	// And finally string literals. These two rules are last since they don't
+	// occur that often.
+	{Name: "StringLit", Pattern: `"([^"]|"")*"`},
 })
 
 // Symbol is a wrapper type for identifiers. We need to have custom parsing

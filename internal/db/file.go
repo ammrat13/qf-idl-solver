@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 
 	"github.com/alecthomas/participle/v2/lexer"
@@ -59,7 +58,6 @@ func FromFile(ast file.File) (db DB, err error) {
 			if err != nil {
 				return
 			}
-			log.Printf("Associated %s : Bool with %d\n", name, l)
 		case file.SortInt:
 			// Create a new variable for the symbol, and add it to the context.
 			v := db.NewVariable()
@@ -67,7 +65,6 @@ func FromFile(ast file.File) (db DB, err error) {
 			if err != nil {
 				return
 			}
-			log.Printf("Associated %s : Int with %d\n", name, v)
 		default:
 			panic("Invalid sort")
 		}
@@ -98,28 +95,22 @@ func FromFile(ast file.File) (db DB, err error) {
 // the database with its constraints. It returns what the expression ultimately
 // evaluates to, or an error if it couldn't be evaluated.
 func (db *DB) processExpr(e file.Expr, ctx context) (ret expr, err error) {
-	// Print debug information if enabled.
-	log.Printf("Processing: %v", e)
-	defer func() { log.Printf("Got: %v", ret) }()
 
 	// Break into cases depending on what the expression actually is. We handle
 	// atoms inline, and handle builders in separate functions.
 	switch ex := e.(type) {
 
 	case file.NumberAtom:
-		log.Println("  Is NumberAtom")
 		// If it's a raw number, just return it
 		return exprConst{Val: ex.Num.Value}, nil
 
 	case file.SymbolAtom:
-		log.Println("  Is SymbolAtom")
 		// If it's a symbol, look it up and return it. Error if we can't find
 		// it.
 		ret, err = ctx.LookupAt(string(ex.Name), e.Position())
 		return
 
 	case file.DiffAtom:
-		log.Println("  Is DiffAtom")
 		var eX, eY expr
 		var vX, vY exprVar
 		nameX := string(ex.LHS)
@@ -148,15 +139,12 @@ func (db *DB) processExpr(e file.Expr, ctx context) (ret expr, err error) {
 		return exprDiff{X: vX.Var, Y: vY.Var}, nil
 
 	case file.NotBuilder:
-		log.Println("  Is NotBuilder")
 		return db.processNot(ex, ctx)
 
 	case file.ITEBuilder:
-		log.Println("  Is ITEBuilder")
 		return db.processITE(ex, ctx)
 
 	case file.EquOpBuilder:
-		log.Println("  Is EquOpBuilder")
 
 		// Process the first argument.
 		var a0 expr
@@ -184,15 +172,12 @@ func (db *DB) processExpr(e file.Expr, ctx context) (ret expr, err error) {
 		}
 
 	case file.BoolOpBuilder:
-		log.Println("  Is BoolOpBuilder")
 		return db.processBoolOp(ex, ctx)
 
 	case file.CmpOpBuilder:
-		log.Println("  Is CmpOpBuilder")
 		return db.processCmpOp(ex, ctx)
 
 	case file.LetBuilder:
-		log.Println("  Is LetBuilder")
 		return db.processLet(ex, ctx)
 
 	}

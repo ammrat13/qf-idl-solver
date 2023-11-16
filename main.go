@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/alecthomas/participle/v2"
@@ -25,8 +23,6 @@ func main() {
 	// Parse command-line arguments. Do the associated setup, then log what we
 	// got for debugging.
 	cfg := config.GetConfiguration()
-	cfg.SetupLogging()
-	log.Printf("Got configuration: %v\n", cfg)
 
 	// Parse the input file.
 	ast, err := file.Parse(cfg.Input)
@@ -47,16 +43,13 @@ func main() {
 		// In either case, exit with error.
 		os.Exit(ParseErrorExit)
 	}
-	log.Printf("Got AST: %v\n", ast)
 
 	// Convert it to CNF.
-	var cnfBuf bytes.Buffer
 	db, err := db.FromFile(*ast)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to construct database: %s\n", err.Error())
 		os.Exit(DatabaseConstructionErrorExit)
 	}
-	log.Printf("Got DB: %v\n", db)
-	db.Clauses.Write(&cnfBuf)
-	log.Printf("Got CNF: %q\n", cnfBuf.String())
+
+	_ = db
 }

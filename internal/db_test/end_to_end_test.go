@@ -1,9 +1,7 @@
 package db_test
 
 import (
-	"io"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,9 +16,6 @@ import (
 const BenchmarkPath = "../../bench/"
 
 func TestBenchmarkDatabase(t *testing.T) {
-
-	// Disable logging
-	log.SetOutput(io.Discard)
 
 	// This test takes a long time to run
 	if testing.Short() {

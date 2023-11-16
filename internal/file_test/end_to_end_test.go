@@ -1,9 +1,7 @@
 package file_test
 
 import (
-	"io"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,9 +15,6 @@ import (
 const BenchmarkPath = "../../bench/"
 
 func TestBenchmarkParsing(t *testing.T) {
-
-	// Disable logging
-	log.SetOutput(io.Discard)
 
 	// This test takes a long time to run
 	if testing.Short() {

@@ -41,6 +41,12 @@ type DB struct {
 	// Note that there is no way to go the other way. This is because difference
 	// constraints use big integers, which are not comparable.
 	AtomID2Diff map[AtomID]*DifferenceConstraint
+
+	// The Variables2AtomIDs map takes in a pair of variables and maps them to a
+	// list of all the [DifferenceConstraint] they participate in, indirected by
+	// their [AtomID]. When the [FromFile] method returns, this list is in
+	// sorted order by the constant.
+	Variables2AtomIDs map[VariablePair][]AtomID
 }
 
 // The AddClauses method adds a set of clauses to the solver. We wrap this
@@ -134,8 +140,16 @@ type DifferenceConstraint struct {
 func (db *DB) makeAtomForDiff(c DifferenceConstraint) (ret AtomID) {
 	// Create a new atom.
 	ret = db.newAtom()
-	// Associate it with the given difference constraint.
+	// Add it to the atom map.
 	db.AtomID2Diff[ret] = &c
+	// Add it to the variable pair map.
+	vp := VariablePair{Fst: c.X, Snd: c.Y}
+	ds, ok := db.Variables2AtomIDs[vp]
+	if ok {
+		db.Variables2AtomIDs[vp] = append(ds, ret)
+	} else {
+		db.Variables2AtomIDs[vp] = []AtomID{ret}
+	}
 	// Done
 	return
 }

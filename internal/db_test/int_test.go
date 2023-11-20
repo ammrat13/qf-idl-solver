@@ -13,6 +13,7 @@ func TestInequality(t *testing.T) {
 	tests := map[string]struct {
 		ast file.File
 		a2d map[db.AtomID]*db.DifferenceConstraint
+		v2a map[db.VariablePair][]db.AtomID
 	}{
 		"le": {
 			ast: file.File{
@@ -37,6 +38,9 @@ func TestInequality(t *testing.T) {
 			},
 			a2d: map[db.AtomID]*db.DifferenceConstraint{
 				3: {X: 0, Y: 1, K: big.NewInt(10)},
+			},
+			v2a: map[db.VariablePair][]db.AtomID{
+				{Fst: 0, Snd: 1}: {3},
 			},
 		},
 		"gt": {
@@ -63,6 +67,9 @@ func TestInequality(t *testing.T) {
 			a2d: map[db.AtomID]*db.DifferenceConstraint{
 				3: {X: 0, Y: 1, K: big.NewInt(10)},
 			},
+			v2a: map[db.VariablePair][]db.AtomID{
+				{Fst: 0, Snd: 1}: {3},
+			},
 		},
 		"ge": {
 			ast: file.File{
@@ -87,6 +94,9 @@ func TestInequality(t *testing.T) {
 			},
 			a2d: map[db.AtomID]*db.DifferenceConstraint{
 				3: {X: 1, Y: 0, K: big.NewInt(-10)},
+			},
+			v2a: map[db.VariablePair][]db.AtomID{
+				{Fst: 1, Snd: 0}: {3},
 			},
 		},
 		"lt": {
@@ -113,6 +123,9 @@ func TestInequality(t *testing.T) {
 			a2d: map[db.AtomID]*db.DifferenceConstraint{
 				3: {X: 1, Y: 0, K: big.NewInt(-10)},
 			},
+			v2a: map[db.VariablePair][]db.AtomID{
+				{Fst: 1, Snd: 0}: {3},
+			},
 		},
 		"equals": {
 			ast: file.File{
@@ -134,6 +147,10 @@ func TestInequality(t *testing.T) {
 				3: {X: 0, Y: 1, K: big.NewInt(0)},
 				4: {X: 1, Y: 0, K: big.NewInt(0)},
 			},
+			v2a: map[db.VariablePair][]db.AtomID{
+				{Fst: 0, Snd: 1}: {3},
+				{Fst: 1, Snd: 0}: {4},
+			},
 		},
 		"distinct": {
 			ast: file.File{
@@ -154,6 +171,10 @@ func TestInequality(t *testing.T) {
 			a2d: map[db.AtomID]*db.DifferenceConstraint{
 				3: {X: 0, Y: 1, K: big.NewInt(0)},
 				4: {X: 1, Y: 0, K: big.NewInt(0)},
+			},
+			v2a: map[db.VariablePair][]db.AtomID{
+				{Fst: 0, Snd: 1}: {3},
+				{Fst: 1, Snd: 0}: {4},
 			},
 		},
 		"duplicate": {
@@ -193,6 +214,9 @@ func TestInequality(t *testing.T) {
 				3: {X: 0, Y: 1, K: big.NewInt(10)},
 				4: {X: 0, Y: 1, K: big.NewInt(10)},
 			},
+			v2a: map[db.VariablePair][]db.AtomID{
+				{Fst: 0, Snd: 1}: {3, 4},
+			},
 		},
 	}
 
@@ -208,7 +232,10 @@ func TestInequality(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(ret.AtomID2Diff, test.a2d) {
-				t.Errorf("maps did not compare equal")
+				t.Errorf("AtomID2Diff maps did not compare equal")
+			}
+			if !reflect.DeepEqual(ret.Variables2AtomIDs, test.v2a) {
+				t.Errorf("Variables2AtomIDs maps did not compare equal")
 			}
 		})
 	}

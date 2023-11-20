@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"math/big"
+	"slices"
 
 	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/ammrat13/qf-idl-solver/internal/file"
@@ -19,6 +20,7 @@ func FromFile(ast file.File) (db DB, err error) {
 	db.Clauses = gini.New()
 	// Create the maps.
 	db.AtomID2Diff = make(map[AtomID]*DifferenceConstraint)
+	db.Variables2AtomIDs = make(map[VariablePair][]AtomID)
 
 	// Setup counters for atoms and variables.
 	db.NextAtom = 1
@@ -85,6 +87,16 @@ func FromFile(ast file.File) (db DB, err error) {
 		}
 		// Add the literal to the list of clauses.
 		db.AddClauses([]Lit{l.Lit})
+	}
+
+	// Finally, sort each of the lists in the Variables2AtomIDs map. We make
+	// this guarantee so that the solver can be more efficient.
+	for _, atoms := range db.Variables2AtomIDs {
+		slices.SortStableFunc[[]AtomID, AtomID](atoms, func(a AtomID, b AtomID) int {
+			ad := db.AtomID2Diff[a]
+			bd := db.AtomID2Diff[b]
+			return ad.K.Cmp(bd.K)
+		})
 	}
 
 	return

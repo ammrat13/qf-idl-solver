@@ -5,6 +5,7 @@
 package db
 
 import (
+	"errors"
 	"math/big"
 
 	"github.com/go-air/gini"
@@ -80,7 +81,7 @@ func ToAtomID(l Lit) AtomID {
 }
 
 // The NewAtom method creates a new [AtomID] for use in clauses.
-func (db *DB) NewAtom() (ret AtomID) {
+func (db *DB) newAtom() (ret AtomID) {
 	// Do bounds checking.
 	if db.NextAtom < 1 {
 		panic("Too many atoms")
@@ -97,9 +98,16 @@ func (db *DB) NewAtom() (ret AtomID) {
 // constraint.
 type VariableID = uint64
 
+// A VariablePair is an ordered pair of two variables. These are used by the
+// [DB] to store difference constraints by the variables they reference.
+type VariablePair struct {
+	Fst VariableID
+	Snd VariableID
+}
+
 // The NewVariable method creates a new [VariableID] for use in
 // [DifferenceConstraint].
-func (db *DB) NewVariable() (ret VariableID) {
+func (db *DB) newVariable() (ret VariableID) {
 	// Compute the return value and increment. This may overflow
 	ret = db.NextVariable
 	db.NextVariable = db.NextVariable + 1
@@ -119,19 +127,31 @@ type DifferenceConstraint struct {
 	K *big.Int
 }
 
-// The GetAtomForDiff function takes in a difference constraint and either looks
-// up its atom's identifier or creates one if it doesn't exist. It returns the
-// value it either found or created.
-func (db *DB) GetAtomForDiff(c DifferenceConstraint) (ret AtomID) {
-	// Check to see if we already have an ID for this constraint.
+func (db DB) GetAtomForDiff(c DifferenceConstraint) (ret AtomID, err error) {
+	// Check to see if we have an ID for this constraint.
 	ret, found := db.Diff2AtomID[&c]
 	if found {
 		return
 	}
-	// Otherwise, create a new atom and associate it with this difference
-	// constraint.
-	ret = db.NewAtom()
-	db.AtomID2Diff[ret] = &c
-	db.Diff2AtomID[&c] = ret
+	// If we don't, set the error and return.
+	err = errors.New("could not find atom for difference constraint")
+	return
+}
+
+// The makeAtomForDiff function takes in a difference constraint and either looks
+// up its atom's identifier or creates one if it doesn't exist. It returns the
+// value it either found or created.
+func (db *DB) makeAtomForDiff(c DifferenceConstraint) (ret AtomID) {
+	var err error
+	// Check to see if we already have an ID for this constraint.
+	ret, err = db.GetAtomForDiff(c)
+	// If we don't have it, create it.
+	if err != nil {
+		// Create a new atom.
+		ret = db.newAtom()
+		// Associate it with the given difference constraint.
+		db.AtomID2Diff[ret] = &c
+		db.Diff2AtomID[&c] = ret
+	}
 	return
 }

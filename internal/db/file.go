@@ -30,8 +30,8 @@ func FromFile(ast file.File) (db DB, err error) {
 	ctx.Names = make(map[string]expr)
 	ctx.Parent = nil
 	// Add true and false to the root context.
-	tt := exprLit{Lit: db.NewAtom()}
-	ff := exprLit{Lit: db.NewAtom()}
+	tt := exprLit{Lit: db.newAtom()}
+	ff := exprLit{Lit: db.newAtom()}
 	err = ctx.AddName("true", tt)
 	if err != nil {
 		panic("Couldn't add true")
@@ -53,14 +53,14 @@ func FromFile(ast file.File) (db DB, err error) {
 		switch decl.Sort {
 		case file.SortBool:
 			// Create a new atom for the symbol, and add it to the context.
-			l := db.NewAtom()
+			l := db.newAtom()
 			err = ctx.AddName(name, exprLit{Lit: l})
 			if err != nil {
 				return
 			}
 		case file.SortInt:
 			// Create a new variable for the symbol, and add it to the context.
-			v := db.NewVariable()
+			v := db.newVariable()
 			err = ctx.AddName(name, exprVar{Var: v})
 			if err != nil {
 				return
@@ -236,7 +236,7 @@ func (db *DB) processITE(e file.ITEBuilder, ctx context) (ret exprLit, err error
 
 	// Create a new atom that we will return, then install it in clauses
 	// that execute the if-then-else.
-	ret = exprLit{Lit: db.NewAtom()}
+	ret = exprLit{Lit: db.newAtom()}
 	db.AddClauses(
 		[]Lit{-lI.Lit, -lT.Lit, ret.Lit},
 		[]Lit{-lI.Lit, lT.Lit, -ret.Lit},
@@ -279,7 +279,7 @@ func (db *DB) processBoolOp(e file.BoolOpBuilder, ctx context) (ret exprLit, err
 		// For implication, the output is false iff all of the premises are true
 		// and the conclusion is false. We can treat this very similarly to an
 		// AND.
-		ret = exprLit{Lit: db.NewAtom()}
+		ret = exprLit{Lit: db.newAtom()}
 
 		// Forward direction
 		forward := make([]Lit, n+1)
@@ -300,7 +300,7 @@ func (db *DB) processBoolOp(e file.BoolOpBuilder, ctx context) (ret exprLit, err
 		// For the forward direction, only if all of the literals are true do
 		// we get the output to be true. For the reverse direction, we can set
 		// all of the input literals to true if the output is true.
-		ret = exprLit{Lit: db.NewAtom()}
+		ret = exprLit{Lit: db.newAtom()}
 
 		// Forward direction
 		forward := make([]Lit, n+1)
@@ -319,7 +319,7 @@ func (db *DB) processBoolOp(e file.BoolOpBuilder, ctx context) (ret exprLit, err
 		// The OR operation is the "reverse" of AND. If any of the inputs are
 		// true we can set the output, but if the output is true we can only
 		// conclude one of the inputs was true.
-		ret = exprLit{Lit: db.NewAtom()}
+		ret = exprLit{Lit: db.newAtom()}
 
 		// Forward direction
 		for _, lA := range lArgs {
@@ -343,7 +343,7 @@ func (db *DB) processBoolOp(e file.BoolOpBuilder, ctx context) (ret exprLit, err
 		for i := 1; i < n; i++ {
 			next := lArgs[i]
 			// Create a new variable and set it equal to cur XOR next.
-			new := exprLit{Lit: db.NewAtom()}
+			new := exprLit{Lit: db.newAtom()}
 			db.AddClauses(
 				[]Lit{cur.Lit, next.Lit, -new.Lit},
 				[]Lit{cur.Lit, -next.Lit, new.Lit},
@@ -459,7 +459,7 @@ func (db *DB) handleCmp(op file.CmpOp, x, y VariableID, k *big.Int) exprLit {
 	}
 
 	// Return the atom via lookup.
-	return exprLit{Lit: db.GetAtomForDiff(DifferenceConstraint{X: x, Y: y, K: k})}
+	return exprLit{Lit: db.makeAtomForDiff(DifferenceConstraint{X: x, Y: y, K: k})}
 }
 
 func (db *DB) processBoolEquOp(e file.EquOpBuilder, ctx context) (ret exprLit, err error) {
@@ -500,7 +500,7 @@ func (db *DB) processBoolEquOp(e file.EquOpBuilder, ctx context) (ret exprLit, e
 		// there. Remember, we have at least two terms.
 
 		// First two terms
-		ret = exprLit{Lit: db.NewAtom()}
+		ret = exprLit{Lit: db.newAtom()}
 		l0 := lArgs[0]
 		l1 := lArgs[1]
 		db.AddClauses(
@@ -512,7 +512,7 @@ func (db *DB) processBoolEquOp(e file.EquOpBuilder, ctx context) (ret exprLit, e
 
 		// Fold
 		for i := 1; i < n-1; i++ {
-			next := exprLit{Lit: db.NewAtom()}
+			next := exprLit{Lit: db.newAtom()}
 			li := lArgs[i]
 			lj := lArgs[i+1]
 			db.AddClauses(
@@ -531,7 +531,7 @@ func (db *DB) processBoolEquOp(e file.EquOpBuilder, ctx context) (ret exprLit, e
 		// do it pairwise.
 
 		// First two terms
-		ret = exprLit{Lit: db.NewAtom()}
+		ret = exprLit{Lit: db.newAtom()}
 		l0 := lArgs[0]
 		l1 := lArgs[1]
 		db.AddClauses(
@@ -549,7 +549,7 @@ func (db *DB) processBoolEquOp(e file.EquOpBuilder, ctx context) (ret exprLit, e
 					continue
 				}
 				// Otherwise, proceed as normal
-				next := exprLit{Lit: db.NewAtom()}
+				next := exprLit{Lit: db.newAtom()}
 				li := lArgs[i]
 				lj := lArgs[j]
 				db.AddClauses(
@@ -622,7 +622,7 @@ func (db *DB) processIntEquOp(e file.EquOpBuilder, a0 expr, ctx context) (ret ex
 	// Compute the two inequalities, and the return.
 	el := db.handleCmp(file.CmpOpLE, x, y, k)
 	er := db.handleCmp(file.CmpOpGE, x, y, k)
-	ret = exprLit{Lit: db.NewAtom()}
+	ret = exprLit{Lit: db.newAtom()}
 
 	// Decide how they relate based on the operation.
 	switch e.Operation {

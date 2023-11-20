@@ -51,5 +51,6 @@ func main() {
 		os.Exit(DatabaseConstructionErrorExit)
 	}
 
-	_ = db
+	// Run preprocessing.
+	cfg.Preprocessor.Preprocess(&db)
 }

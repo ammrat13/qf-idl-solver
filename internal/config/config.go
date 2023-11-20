@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/ammrat13/qf-idl-solver/internal/preprocessing"
 )
 
 // The ConfigurationErrorExit value is the exit code when this program fails to
@@ -19,6 +21,11 @@ type Configuration struct {
 	Input io.Reader
 	// InputName is the name of the input file.
 	InputName string
+
+	// Preprocessor is the object we will use to preprocess the clauses.
+	Preprocessor preprocessing.Preprocessor
+	// PreprocessorName is the name of the preprocessor we will use.
+	PreprocessorName string
 }
 
 // GetConfiguration looks at the command-line arguments passed to the program
@@ -28,6 +35,7 @@ func GetConfiguration() (ret Configuration) {
 
 	// Define for error handling
 	var err error
+	var ok bool
 
 	flag.Usage = func() {
 		// Define usage message. This way, we can get a nice message if the user
@@ -41,6 +49,7 @@ func GetConfiguration() (ret Configuration) {
 	}
 
 	// Handle command-line flags.
+	flag.StringVar(&ret.PreprocessorName, "preprocessor", "", "What preprocessor to use on the database")
 	flag.Parse()
 
 	// Now we have to handle the input file. First, check that we actually got
@@ -56,6 +65,13 @@ func GetConfiguration() (ret Configuration) {
 	ret.Input, err = os.Open(ret.InputName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not open input file '%s'\n", ret.InputName)
+		os.Exit(ConfigurationErrorExit)
+	}
+
+	// Lookup the preprocessor and set it.
+	ret.Preprocessor, ok = preprocessing.Preprocessors[ret.PreprocessorName]
+	if !ok {
+		fmt.Fprintf(os.Stderr, "could not find preprocessor '%s'\n", ret.PreprocessorName)
 		os.Exit(ConfigurationErrorExit)
 	}
 

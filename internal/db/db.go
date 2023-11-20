@@ -5,7 +5,6 @@
 package db
 
 import (
-	"errors"
 	"math/big"
 
 	"github.com/go-air/gini"
@@ -38,11 +37,10 @@ type DB struct {
 	// The AtomIDToDiff map goes from atom identifiers to [DifferenceConstraint]
 	// in the problem. If an ID doesn't show up in the domain, it has no
 	// [DifferenceConstraint] associated with it, and it's just a boolean.
+	//
+	// Note that there is no way to go the other way. This is because difference
+	// constraints use big integers, which are not comparable.
 	AtomID2Diff map[AtomID]*DifferenceConstraint
-	// The DiffToAtomID map goes in the opposite direction from [AtomIDToDiff].
-	// If a [DifferenceConstraint] doesn't show up in the domain, it has no
-	// associated ID, and is invalid.
-	Diff2AtomID map[*DifferenceConstraint]AtomID
 }
 
 // The AddClauses method adds a set of clauses to the solver. We wrap this
@@ -127,31 +125,17 @@ type DifferenceConstraint struct {
 	K *big.Int
 }
 
-func (db DB) GetAtomForDiff(c DifferenceConstraint) (ret AtomID, err error) {
-	// Check to see if we have an ID for this constraint.
-	ret, found := db.Diff2AtomID[&c]
-	if found {
-		return
-	}
-	// If we don't, set the error and return.
-	err = errors.New("could not find atom for difference constraint")
-	return
-}
-
-// The makeAtomForDiff function takes in a difference constraint and either looks
-// up its atom's identifier or creates one if it doesn't exist. It returns the
-// value it either found or created.
+// The makeAtomForDiff function takes in a [DifferenceConstraint] and creates an
+// [AtomID] corresponding to it. It also does all of the bookkeeping required
+// when adding difference constraints.
+//
+// Note that we create a new value for each constraint. This is because we have
+// no good way to look up constraints in a map.
 func (db *DB) makeAtomForDiff(c DifferenceConstraint) (ret AtomID) {
-	var err error
-	// Check to see if we already have an ID for this constraint.
-	ret, err = db.GetAtomForDiff(c)
-	// If we don't have it, create it.
-	if err != nil {
-		// Create a new atom.
-		ret = db.newAtom()
-		// Associate it with the given difference constraint.
-		db.AtomID2Diff[ret] = &c
-		db.Diff2AtomID[&c] = ret
-	}
+	// Create a new atom.
+	ret = db.newAtom()
+	// Associate it with the given difference constraint.
+	db.AtomID2Diff[ret] = &c
+	// Done
 	return
 }

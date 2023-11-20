@@ -19,7 +19,6 @@ func FromFile(ast file.File) (db DB, err error) {
 	db.Clauses = gini.New()
 	// Create the maps.
 	db.AtomID2Diff = make(map[AtomID]*DifferenceConstraint)
-	db.Diff2AtomID = make(map[*DifferenceConstraint]AtomID)
 
 	// Setup counters for atoms and variables.
 	db.NextAtom = 1

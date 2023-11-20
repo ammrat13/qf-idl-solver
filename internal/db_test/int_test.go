@@ -156,6 +156,44 @@ func TestInequality(t *testing.T) {
 				4: {X: 1, Y: 0, K: big.NewInt(0)},
 			},
 		},
+		"duplicate": {
+			ast: file.File{
+				Declarations: []file.Declaration{
+					{Name: file.Symbol("x"), Sort: file.SortInt},
+					{Name: file.Symbol("y"), Sort: file.SortInt},
+				},
+				Assertions: []file.Expr{
+					file.CmpOpBuilder{
+						Operation: file.CmpOpLE,
+						Arguments: file.CmpDiff{
+							Difference: file.DiffAtom{
+								LHS: file.Symbol("x"),
+								RHS: file.Symbol("y"),
+							},
+							Constant: file.NumberAtom{
+								Num: file.Number{Value: big.NewInt(10)},
+							},
+						},
+					},
+					file.CmpOpBuilder{
+						Operation: file.CmpOpLE,
+						Arguments: file.CmpDiff{
+							Difference: file.DiffAtom{
+								LHS: file.Symbol("x"),
+								RHS: file.Symbol("y"),
+							},
+							Constant: file.NumberAtom{
+								Num: file.Number{Value: big.NewInt(10)},
+							},
+						},
+					},
+				},
+			},
+			a2d: map[db.AtomID]*db.DifferenceConstraint{
+				3: {X: 0, Y: 1, K: big.NewInt(10)},
+				4: {X: 0, Y: 1, K: big.NewInt(10)},
+			},
+		},
 	}
 
 	for name, test := range tests {

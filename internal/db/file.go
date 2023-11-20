@@ -93,8 +93,17 @@ func FromFile(ast file.File) (db DB, err error) {
 	// this guarantee so that the solver can be more efficient.
 	for _, atoms := range db.Variables2AtomIDs {
 		slices.SortStableFunc[[]AtomID, AtomID](atoms, func(a AtomID, b AtomID) int {
-			ad := db.AtomID2Diff[a]
-			bd := db.AtomID2Diff[b]
+			var ok bool
+			// Lookup difference constraints for atoms
+			ad, ok := db.AtomID2Diff[a]
+			if !ok {
+				panic("Atom not in AtomID2Diff")
+			}
+			bd, ok := db.AtomID2Diff[b]
+			if !ok {
+				panic("Atom not in AtomID2Diff")
+			}
+			// Return the comparison of the constants
 			return ad.K.Cmp(bd.K)
 		})
 	}

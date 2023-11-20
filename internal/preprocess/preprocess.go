@@ -19,6 +19,6 @@ type Preprocessor interface {
 // they are associated with. We use this map when processing command-line
 // arguments.
 var Preprocessors = map[string]Preprocessor{
-	"t":     NewTrans(),
-	"trans": NewTrans(),
+	"t":     Trans{},
+	"trans": Trans{},
 }

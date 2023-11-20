@@ -98,7 +98,7 @@ func TestTrans(t *testing.T) {
 			ret.Clauses = gini.New()
 			ret.AddClauses(test.clauses...)
 
-			preprocess.NewTrans().Preprocess(&ret)
+			preprocess.Trans{}.Preprocess(&ret)
 
 			if ret.Clauses.Solve() != test.sat {
 				t.Errorf("wrong satisfiability")

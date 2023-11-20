@@ -8,10 +8,7 @@ import (
 // minimum required to allow the solver to function.
 type Trans struct{}
 
-// The NewTrans function creates a new [Trans] instance.
-func NewTrans() Trans { return Trans{} }
-
-func (t Trans) Preprocess(db *db.DB) {
+func (Trans) Preprocess(db *db.DB) {
 
 	// For each pair of variables, add constraints.
 	for _, atoms := range db.Variables2AtomIDs {

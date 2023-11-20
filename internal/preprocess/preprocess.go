@@ -1,4 +1,4 @@
-// The preprocessing package consists of all the preprocessing operations we can
+// The preprocess package consists of all the preprocessing operations we can
 // do. In the proposal, preprocessing was optional, but that is not the case
 // now. We have to at least apply the transitivity rule so that we can use
 // binary search on the clauses.

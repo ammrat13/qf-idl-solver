@@ -55,7 +55,7 @@ func GetConfiguration() (ret Configuration) {
 	}
 
 	// Handle command-line flags.
-	flag.StringVar(&ret.PreprocessorName, "preprocessor", "", "What preprocessor to use on the database")
+	flag.StringVar(&ret.PreprocessorName, "preprocessor", "nil", "What preprocessor to use on the database")
 	flag.StringVar(&ret.SolverName, "solver", "", "What theory to use")
 	flag.Parse()
 

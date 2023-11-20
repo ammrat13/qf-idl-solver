@@ -1,7 +1,7 @@
 // The preprocess package consists of all the preprocessing operations we can
 // do. In the proposal, preprocessing was optional, but that is not the case
-// now. We have to at least apply the transitivity rule so that we can use
-// binary search on the clauses.
+// now. We should at least apply the transitivity rule so that we can use binary
+// search on the clauses if we want to in the future.
 package preprocess
 
 import (
@@ -19,6 +19,6 @@ type Preprocessor interface {
 // they are associated with. We use this map when processing command-line
 // arguments.
 var Preprocessors = map[string]Preprocessor{
-	"t":     Trans{},
+	"nil":   Nil{},
 	"trans": Trans{},
 }

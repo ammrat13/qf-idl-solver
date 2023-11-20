@@ -4,8 +4,7 @@ import (
 	"github.com/ammrat13/qf-idl-solver/internal/db"
 )
 
-// The Trans preprocessor only applies the transitivity rule. This is the bare
-// minimum required to allow the solver to function.
+// The Trans preprocessor only applies the transitivity rule.
 type Trans struct{}
 
 func (Trans) Preprocess(db *db.DB) {

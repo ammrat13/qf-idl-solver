@@ -8,6 +8,7 @@ import (
 	"github.com/ammrat13/qf-idl-solver/internal/config"
 	"github.com/ammrat13/qf-idl-solver/internal/db"
 	"github.com/ammrat13/qf-idl-solver/internal/file"
+	"github.com/ammrat13/qf-idl-solver/internal/theory"
 )
 
 // The ParseErrorExit value is the exit code when this program fails to parse an
@@ -53,4 +54,13 @@ func main() {
 
 	// Run preprocessing.
 	cfg.Preprocessor.Preprocess(&db)
+
+	// Solve. Make sure we get the right status.
+	status := theory.Solve(&db, cfg.Solver)
+	if exp := ast.GetStatus(); exp != file.StatusUnknown && exp != status {
+		panic("Solver returned wrong answer")
+	}
+
+	// Print the result.
+	fmt.Println(status)
 }

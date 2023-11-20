@@ -39,3 +39,14 @@ func Parse(input io.Reader) (ret *File, err error) {
 
 	return
 }
+
+// The GetStatus method returns the solution status of the given file, if known.
+// To find this, the method looks over all the metadata and takes the first one.
+func (file File) GetStatus() Status {
+	for _, mtd := range file.Metadata {
+		if mtdStatus, ok := mtd.(MetadataStatus); ok {
+			return mtdStatus.Status
+		}
+	}
+	return StatusUnknown
+}

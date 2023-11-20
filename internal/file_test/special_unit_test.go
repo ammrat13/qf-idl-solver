@@ -70,6 +70,67 @@ func TestStatusParsing(t *testing.T) {
 	}
 }
 
+func TestGetStatus(t *testing.T) {
+	tests := map[string]struct {
+		data   io.Reader
+		status file.Status
+	}{
+		"sat": {data: strings.NewReader(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(set-info :status sat)
+			(check-sat)
+			(exit)
+		`), status: file.StatusSat},
+		"unsat": {data: strings.NewReader(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(set-info :status unsat)
+			(check-sat)
+			(exit)
+		`), status: file.StatusUnsat},
+		"unknown": {data: strings.NewReader(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(set-info :status unknown)
+			(check-sat)
+			(exit)
+		`), status: file.StatusUnknown},
+		"both": {data: strings.NewReader(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(set-info :status sat)
+			(set-info :status unsat)
+			(check-sat)
+			(exit)
+		`), status: file.StatusSat},
+		"neither": {data: strings.NewReader(`
+			(set-info :smt-lib-version 2.6)
+			(set-logic QF_IDL)
+			(check-sat)
+			(exit)
+		`), status: file.StatusUnknown},
+	}
+
+	for name, test := range tests {
+		test := test
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ret, err := file.Parse(test.data)
+			if err != nil {
+				t.Errorf("parse error: %s", err.Error())
+				t.FailNow()
+			}
+
+			// Check that we can get the status of the file correctly.
+			if ret.GetStatus() != test.status {
+				t.Error("wrong status")
+			}
+		})
+	}
+}
+
 func TestSymbolParsing(t *testing.T) {
 	tests := map[string]struct {
 		data  io.Reader

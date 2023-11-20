@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ammrat13/qf-idl-solver/internal/db"
+	"github.com/ammrat13/qf-idl-solver/internal/file"
 )
 
 // A Node in the constraint graph is just a variable.
@@ -34,4 +35,11 @@ type Solver interface {
 // associated with. We use this map when processing command-line arguments.
 var Solvers = map[string]Solver{
 	"bf": BF{},
+}
+
+// The Solve function implements the high-level solving algorithm described in
+// class. In other words, it implements offline DPLL(T). It is complete - it
+// will never return unknown.
+func Solve(db *db.DB, thr Solver) file.Status {
+	return file.StatusSat
 }

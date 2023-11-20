@@ -1,4 +1,4 @@
-package preprocessing_test
+package preprocess_test
 
 import (
 	"math/big"

@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/ammrat13/qf-idl-solver/internal/preprocessing"
+	"github.com/ammrat13/qf-idl-solver/internal/preprocess"
 )
 
 // The ConfigurationErrorExit value is the exit code when this program fails to
@@ -23,7 +23,7 @@ type Configuration struct {
 	InputName string
 
 	// Preprocessor is the object we will use to preprocess the clauses.
-	Preprocessor preprocessing.Preprocessor
+	Preprocessor preprocess.Preprocessor
 	// PreprocessorName is the name of the preprocessor we will use.
 	PreprocessorName string
 }
@@ -69,7 +69,7 @@ func GetConfiguration() (ret Configuration) {
 	}
 
 	// Lookup the preprocessor and set it.
-	ret.Preprocessor, ok = preprocessing.Preprocessors[ret.PreprocessorName]
+	ret.Preprocessor, ok = preprocess.Preprocessors[ret.PreprocessorName]
 	if !ok {
 		fmt.Fprintf(os.Stderr, "could not find preprocessor '%s'\n", ret.PreprocessorName)
 		os.Exit(ConfigurationErrorExit)

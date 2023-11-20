@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/ammrat13/qf-idl-solver/internal/db"
-	"github.com/ammrat13/qf-idl-solver/internal/preprocessing"
+	"github.com/ammrat13/qf-idl-solver/internal/preprocess"
 	"github.com/go-air/gini"
 )
 
@@ -98,7 +98,7 @@ func TestTrans(t *testing.T) {
 			ret.Clauses = gini.New()
 			ret.AddClauses(test.clauses...)
 
-			preprocessing.NewTrans().Preprocess(&ret)
+			preprocess.NewTrans().Preprocess(&ret)
 
 			if ret.Clauses.Solve() != test.sat {
 				t.Errorf("wrong satisfiability")

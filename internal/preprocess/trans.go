@@ -1,4 +1,4 @@
-package preprocessing
+package preprocess
 
 import (
 	"github.com/ammrat13/qf-idl-solver/internal/db"

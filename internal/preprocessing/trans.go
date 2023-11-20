@@ -42,7 +42,7 @@ func (t Trans) Preprocess(db *db.DB) {
 			if !ok || kj == nil {
 				panic("Atom not in AtomID2Diff")
 			}
-			// The constaints should be in sorted order
+			// The constraints should be in sorted order
 			if ki.Cmp(kj) == 1 {
 				panic("Atoms not in sorted order")
 			}

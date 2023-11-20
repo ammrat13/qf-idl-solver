@@ -269,12 +269,12 @@ func TestBool(t *testing.T) {
 
 func TestSat(t *testing.T) {
 	tests := map[string]struct {
-		ast file.File
-		sat int
+		ast  file.File
+		stat file.Status
 	}{
 		"empty": {
-			ast: file.File{},
-			sat: 1,
+			ast:  file.File{},
+			stat: file.StatusSat,
 		},
 		"contr": {
 			ast: file.File{
@@ -282,7 +282,7 @@ func TestSat(t *testing.T) {
 					file.SymbolAtom{Name: file.Symbol("false")},
 				},
 			},
-			sat: -1,
+			stat: file.StatusUnsat,
 		},
 		"not": {
 			ast: file.File{
@@ -292,7 +292,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: 1,
+			stat: file.StatusSat,
 		},
 		"not_not": {
 			ast: file.File{
@@ -304,7 +304,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: -1,
+			stat: file.StatusUnsat,
 		},
 		"ite_true": {
 			ast: file.File{
@@ -316,7 +316,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: 1,
+			stat: file.StatusSat,
 		},
 		"ite_false": {
 			ast: file.File{
@@ -328,7 +328,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: -1,
+			stat: file.StatusUnsat,
 		},
 		"implies_true": {
 			ast: file.File{
@@ -345,7 +345,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: -1,
+			stat: file.StatusUnsat,
 		},
 		"implies_false": {
 			ast: file.File{
@@ -362,7 +362,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: 1,
+			stat: file.StatusSat,
 		},
 		"and_true": {
 			ast: file.File{
@@ -379,7 +379,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: 1,
+			stat: file.StatusSat,
 		},
 		"and_false": {
 			ast: file.File{
@@ -396,7 +396,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: -1,
+			stat: file.StatusUnsat,
 		},
 		"or_true": {
 			ast: file.File{
@@ -413,7 +413,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: 1,
+			stat: file.StatusSat,
 		},
 		"or_false": {
 			ast: file.File{
@@ -430,7 +430,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: -1,
+			stat: file.StatusUnsat,
 		},
 		"xor_true": {
 			ast: file.File{
@@ -451,7 +451,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: 1,
+			stat: file.StatusSat,
 		},
 		"xor_false": {
 			ast: file.File{
@@ -473,7 +473,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: -1,
+			stat: file.StatusUnsat,
 		},
 		"equals_true_true": {
 			ast: file.File{
@@ -489,7 +489,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: 1,
+			stat: file.StatusSat,
 		},
 		"equals_true_false": {
 			ast: file.File{
@@ -505,7 +505,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: 1,
+			stat: file.StatusSat,
 		},
 		"equals_false": {
 			ast: file.File{
@@ -521,7 +521,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: -1,
+			stat: file.StatusUnsat,
 		},
 		"distinct_true": {
 			ast: file.File{
@@ -539,7 +539,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: 1,
+			stat: file.StatusSat,
 		},
 		"distinct_false": {
 			ast: file.File{
@@ -559,7 +559,7 @@ func TestSat(t *testing.T) {
 					},
 				},
 			},
-			sat: -1,
+			stat: file.StatusUnsat,
 		},
 	}
 
@@ -574,7 +574,7 @@ func TestSat(t *testing.T) {
 				t.FailNow()
 			}
 
-			if ret.Clauses.Solve() != test.sat {
+			if ret.SATSolve() != test.stat {
 				t.Errorf("wrong satisfiability")
 			}
 		})

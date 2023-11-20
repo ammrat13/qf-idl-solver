@@ -7,6 +7,7 @@ package db
 import (
 	"math/big"
 
+	"github.com/ammrat13/qf-idl-solver/internal/file"
 	"github.com/go-air/gini"
 	"github.com/go-air/gini/z"
 )
@@ -59,6 +60,23 @@ func (db *DB) AddClauses(clauses ...[]Lit) {
 		db.Clauses.Add(0)
 	}
 }
+
+// The SATSolve method runs solving on the known clauses. It doesn't consider
+// any theory.
+func (db *DB) SATSolve() file.Status {
+	switch db.Clauses.Solve() {
+	case 1:
+		return file.StatusSat
+	case -1:
+		return file.StatusUnsat
+	default:
+		return file.StatusUnknown
+	}
+}
+
+// The Value method gets the value of a particular literal once we've tried to
+// solve it. It does the conversion from DIMACS to an internal representation.
+func (db DB) Value(lit Lit) bool { return db.Clauses.Value(z.Dimacs2Lit(lit)) }
 
 // The AtomID type represents an identifier for an atom, whether that be a
 // boolean variable or a difference constraint. It must be strictly positive.

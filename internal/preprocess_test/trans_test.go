@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ammrat13/qf-idl-solver/internal/db"
+	"github.com/ammrat13/qf-idl-solver/internal/file"
 	"github.com/ammrat13/qf-idl-solver/internal/preprocess"
 	"github.com/go-air/gini"
 )
@@ -13,7 +14,7 @@ func TestTrans(t *testing.T) {
 	tests := map[string]struct {
 		base    db.DB
 		clauses [][]int
-		sat     int
+		stat    file.Status
 	}{
 		"basic_sat": {
 			base: db.DB{
@@ -31,7 +32,7 @@ func TestTrans(t *testing.T) {
 				{3},
 				{4},
 			},
-			sat: 1,
+			stat: file.StatusSat,
 		},
 		"lhs_sat": {
 			base: db.DB{
@@ -49,7 +50,7 @@ func TestTrans(t *testing.T) {
 				{-3},
 				{4},
 			},
-			sat: 1,
+			stat: file.StatusSat,
 		},
 		"none_sat": {
 			base: db.DB{
@@ -67,7 +68,7 @@ func TestTrans(t *testing.T) {
 				{-3},
 				{-4},
 			},
-			sat: 1,
+			stat: file.StatusSat,
 		},
 		"unsat": {
 			base: db.DB{
@@ -85,7 +86,7 @@ func TestTrans(t *testing.T) {
 				{3},
 				{-4},
 			},
-			sat: -1,
+			stat: file.StatusUnsat,
 		},
 	}
 
@@ -100,7 +101,7 @@ func TestTrans(t *testing.T) {
 
 			preprocess.Trans{}.Preprocess(&ret)
 
-			if ret.Clauses.Solve() != test.sat {
+			if ret.SATSolve() != test.stat {
 				t.Errorf("wrong satisfiability")
 			}
 		})

@@ -7,6 +7,7 @@ import (
 
 	"github.com/ammrat13/qf-idl-solver/internal/db"
 	"github.com/ammrat13/qf-idl-solver/internal/file"
+	"github.com/ammrat13/qf-idl-solver/internal/theory"
 )
 
 func TestInequality(t *testing.T) {
@@ -236,6 +237,144 @@ func TestInequality(t *testing.T) {
 			}
 			if !reflect.DeepEqual(ret.Variables2AtomIDs, test.v2a) {
 				t.Errorf("Variables2AtomIDs maps did not compare equal")
+			}
+		})
+	}
+}
+
+func TestInequalitySolver(t *testing.T) {
+	tests := map[string]struct {
+		ast  file.File
+		stat file.Status
+	}{
+		"equality_sat_pos": {
+			ast: file.File{
+				Declarations: []file.Declaration{
+					{Name: file.Symbol("x"), Sort: file.SortInt},
+					{Name: file.Symbol("y"), Sort: file.SortInt},
+				},
+				Assertions: []file.Expr{
+					file.EquOpBuilder{
+						Operation: file.EquOpEQ,
+						Arguments: []file.Expr{
+							file.SymbolAtom{Name: file.Symbol("x")},
+							file.SymbolAtom{Name: file.Symbol("y")},
+						},
+					},
+					file.NotBuilder{
+						Argument: file.EquOpBuilder{
+							Operation: file.EquOpNE,
+							Arguments: []file.Expr{
+								file.SymbolAtom{Name: file.Symbol("x")},
+								file.SymbolAtom{Name: file.Symbol("y")},
+							},
+						},
+					},
+				},
+			},
+			stat: file.StatusSat,
+		},
+		"equality_sat_neg": {
+			ast: file.File{
+				Declarations: []file.Declaration{
+					{Name: file.Symbol("x"), Sort: file.SortInt},
+					{Name: file.Symbol("y"), Sort: file.SortInt},
+				},
+				Assertions: []file.Expr{
+					file.NotBuilder{
+						Argument: file.EquOpBuilder{
+							Operation: file.EquOpEQ,
+							Arguments: []file.Expr{
+								file.SymbolAtom{Name: file.Symbol("x")},
+								file.SymbolAtom{Name: file.Symbol("y")},
+							},
+						},
+					},
+					file.EquOpBuilder{
+						Operation: file.EquOpNE,
+						Arguments: []file.Expr{
+							file.SymbolAtom{Name: file.Symbol("x")},
+							file.SymbolAtom{Name: file.Symbol("y")},
+						},
+					},
+				},
+			},
+			stat: file.StatusSat,
+		},
+		"equality_unsat_pos": {
+			ast: file.File{
+				Declarations: []file.Declaration{
+					{Name: file.Symbol("x"), Sort: file.SortInt},
+					{Name: file.Symbol("y"), Sort: file.SortInt},
+				},
+				Assertions: []file.Expr{
+					file.EquOpBuilder{
+						Operation: file.EquOpEQ,
+						Arguments: []file.Expr{
+							file.SymbolAtom{Name: file.Symbol("x")},
+							file.SymbolAtom{Name: file.Symbol("y")},
+						},
+					},
+					file.EquOpBuilder{
+						Operation: file.EquOpNE,
+						Arguments: []file.Expr{
+							file.SymbolAtom{Name: file.Symbol("x")},
+							file.SymbolAtom{Name: file.Symbol("y")},
+						},
+					},
+				},
+			},
+			stat: file.StatusUnsat,
+		},
+		"equality_unsat_neg": {
+			ast: file.File{
+				Declarations: []file.Declaration{
+					{Name: file.Symbol("x"), Sort: file.SortInt},
+					{Name: file.Symbol("y"), Sort: file.SortInt},
+				},
+				Assertions: []file.Expr{
+					file.NotBuilder{
+						Argument: file.EquOpBuilder{
+							Operation: file.EquOpEQ,
+							Arguments: []file.Expr{
+								file.SymbolAtom{Name: file.Symbol("x")},
+								file.SymbolAtom{Name: file.Symbol("y")},
+							},
+						},
+					},
+					file.NotBuilder{
+						Argument: file.EquOpBuilder{
+							Operation: file.EquOpNE,
+							Arguments: []file.Expr{
+								file.SymbolAtom{Name: file.Symbol("x")},
+								file.SymbolAtom{Name: file.Symbol("y")},
+							},
+						},
+					},
+				},
+			},
+			stat: file.StatusUnsat,
+		},
+	}
+
+	for name, test := range tests {
+		test := test
+		t.Run(name, func(t *testing.T) {
+			for solverName, solver := range theory.Solvers {
+				solver := solver
+				t.Run(solverName, func(t *testing.T) {
+					t.Parallel()
+
+					db, err := db.FromFile(test.ast)
+					if err != nil {
+						t.Errorf("construction error: %s", err.Error())
+						t.FailNow()
+					}
+
+					if theory.Solve(&db, solver) != test.stat {
+						t.Errorf("wrong satisfiability")
+					}
+				})
 			}
 		})
 	}

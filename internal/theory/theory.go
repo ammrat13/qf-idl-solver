@@ -13,15 +13,15 @@ import (
 type Node = db.VariableID
 
 // An Edge consists of the metadata associated with an edge. That's its weight
-// along with the underlying atom.
+// along with the underlying literal.
 type Edge struct {
 	Weight *big.Int
-	Atom   db.AtomID
+	Lit    db.Lit
 }
 
 // An AdjacencyList represents the adjacency list of the constraint graph. The
 // first variable is the source [Node], followed by the destination [Node],
-// followed by the weight (and underlying atom).
+// followed by the weight (and underlying literal).
 //
 // If the first variable is not present, then it has no outgoing edges. If the
 // second variable is not present, there is no edge to that vertex.
@@ -51,41 +51,59 @@ var Solvers = map[string]Solver{
 // The Solve function implements the high-level solving algorithm described in
 // class. In other words, it implements offline DPLL(T). It is complete - it
 // will never return unknown. It may panic though.
-func Solve(db *db.DB, thr Solver) file.Status {
+func Solve(dbase *db.DB, thr Solver) file.Status {
 
 	// Do theory setup.
-	thr.SetNumVar(db.NextVariable)
+	thr.SetNumVar(dbase.NextVariable)
 
 	for {
 		// SAT Solve. If unsat, return unsat.
-		satres := db.SATSolve()
+		satres := dbase.SATSolve()
 		if satres == file.StatusUnsat {
 			return file.StatusUnsat
 		}
 
-		// Otherwise, construct the adjacency list.
+		// Otherwise, construct the adjacency list. We do this in two passes. In
+		// the first, we look for positive atoms, which we can inject into the
+		// adjacency list directly. In the second, we look for negative atoms,
+		// for which we have to add constraints to make sure we don't
+		// accidentally satisfy them.
 		adjList := make(AdjacencyList)
-		for varpair, atoms := range db.Variables2AtomIDs {
-			// Look for the first atom that is true. Remember that it's sorted
-			// by ascending order of constants.
-			for _, atom := range atoms {
-				var ok bool
-				if !db.Value(atom) {
+		for pospair, atoms := range dbase.Variables2AtomIDs {
+			one := big.NewInt(1)
+			negpair := db.VariablePair{
+				Fst: pospair.Snd,
+				Snd: pospair.Fst,
+			}
+
+			// Positive pass
+			for i := 0; i < len(atoms); i++ {
+				atom := atoms[i]
+				if !dbase.Value(atom) {
 					continue
 				}
+				// Assert x <= y + k
+				addEdge(adjList, pospair, Edge{
+					Weight: dbase.AtomID2Diff[atom].K,
+					Lit:    atom,
+				})
+				break
+			}
 
-				// Make sure the source (second) variable is populated.
-				_, ok = adjList[varpair.Snd]
-				if !ok {
-					adjList[varpair.Snd] = make(map[Node]Edge)
+			// Negative pass
+			for i := len(atoms) - 1; i >= 0; i-- {
+				atom := atoms[i]
+				if dbase.Value(atom) {
+					continue
 				}
-				// Get the constant value for the atom.
-				k := db.AtomID2Diff[atom].K
-				if k == nil {
-					panic("Bad constant")
-				}
-				// Add it to the adjacency list only.
-				adjList[varpair.Snd][varpair.Fst] = Edge{Weight: k, Atom: atom}
+				// Assert x > y + k, which is equivalent to y <= x - k - 1
+				var newK *big.Int
+				newK = new(big.Int).Neg(dbase.AtomID2Diff[atom].K)
+				newK = newK.Sub(newK, one)
+				addEdge(adjList, negpair, Edge{
+					Weight: newK,
+					Lit:    -atom,
+				})
 				break
 			}
 		}
@@ -115,8 +133,22 @@ func Solve(db *db.DB, thr Solver) file.Status {
 			}
 
 			// Add the new constraint.
-			toAdd[i] = -adjList[cycle[i]][cycle[j]].Atom
+			toAdd[i] = -adjList[cycle[i]][cycle[j]].Lit
 		}
-		db.AddClauses(toAdd)
+		dbase.AddClauses(toAdd)
+	}
+}
+
+func addEdge(adjList AdjacencyList, varpair db.VariablePair, edge Edge) {
+	// Make sure the source (second) variable is populated.
+	_, ok := adjList[varpair.Snd]
+	if !ok {
+		adjList[varpair.Snd] = make(map[Node]Edge)
+	}
+	// If it doesn't exist, just add it. If it does, first check that the edge
+	// is less than.
+	oldEdge, ok := adjList[varpair.Snd][varpair.Fst]
+	if !ok || oldEdge.Weight.Cmp(edge.Weight) == 1 {
+		adjList[varpair.Snd][varpair.Fst] = edge
 	}
 }

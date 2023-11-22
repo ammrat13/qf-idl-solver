@@ -2,7 +2,6 @@ package theory
 
 import (
 	"errors"
-	"log"
 	"math/big"
 
 	"github.com/gammazero/deque"
@@ -62,10 +61,10 @@ func (thr *BF) Solve(graph AdjacencyList) (ret Cycle, err error) {
 
 	// Initialize the nodes at depth zero.
 	for i := range thr.nodes {
-		z := big.NewInt(0)
+		zero := big.NewInt(0)
 		thr.nodes[i] = nodeData{
 			State:       nodeStateLabeled,
-			Distance:    z,
+			Distance:    zero,
 			Predecessor: nil,
 			Depth:       0,
 		}
@@ -111,7 +110,6 @@ func (thr *BF) Solve(graph AdjacencyList) (ret Cycle, err error) {
 	}
 
 	// Couldn't find anything
-	log.Println(thr.nodes)
 	return Cycle{}, errors.New("no negative cycle")
 }
 

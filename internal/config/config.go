@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/ammrat13/qf-idl-solver/internal/preprocess"
 	"github.com/ammrat13/qf-idl-solver/internal/theory"
@@ -39,6 +40,9 @@ type Configuration struct {
 	// CSVStats reports whether we should print statistics in CSV format instead
 	// of human-readable format. This value only matters when PrintStats is set.
 	CSVStats bool
+
+	// Timeout is how long to try solving for before killing ourselves.
+	Timeout time.Duration
 }
 
 // GetConfiguration looks at the command-line arguments passed to the program
@@ -66,6 +70,7 @@ func GetConfiguration() (ret Configuration) {
 	flag.StringVar(&ret.SolverName, "solver", "", "What theory to use")
 	flag.BoolVar(&ret.PrintStats, "stats", false, "Print statistics instead of problem status")
 	flag.BoolVar(&ret.CSVStats, "csv", false, "Print statistics in CSV format")
+	flag.DurationVar(&ret.Timeout, "timeout", 0, "Timeout for solving")
 	flag.Parse()
 
 	// Now we have to handle the input file. First, check that we actually got

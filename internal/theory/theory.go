@@ -62,13 +62,11 @@ func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
 	ONE := big.NewInt(1)
 
 	for {
-		stats.SolverCalls++
 
 		// SAT Solve.
 		t_sat_start := time.Now()
 		satres := dbase.SATSolve()
 		t_sat_end := time.Now()
-		stats.SATSolverDuration += t_sat_end.Sub(t_sat_start)
 		//If unsat, return unsat.
 		if satres == file.StatusUnsat {
 			return file.StatusUnsat
@@ -136,13 +134,11 @@ func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
 			}
 		}
 		t_graph_end := time.Now()
-		stats.GraphOverheadDuration += t_graph_end.Sub(t_graph_start)
 
 		// Send the adjacency list to the theory solver.
 		t_thr_start := time.Now()
 		cycle, err := thr.Solve(adjList, stats)
 		t_thr_end := time.Now()
-		stats.TheorySolverDuration += t_thr_end.Sub(t_thr_start)
 		// If sat, we're done
 		if err != nil {
 			return file.StatusSat
@@ -158,6 +154,12 @@ func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
 		}
 		dbase.AddClauses(toAdd)
 		t_lrn_end := time.Now()
+
+		// Update statistics
+		stats.SolverCalls++
+		stats.SATSolverDuration += t_sat_end.Sub(t_sat_start)
+		stats.GraphOverheadDuration += t_graph_end.Sub(t_graph_start)
+		stats.TheorySolverDuration += t_thr_end.Sub(t_thr_start)
 		stats.LearnOverheadDuration += t_lrn_end.Sub(t_lrn_start)
 	}
 }

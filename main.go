@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/alecthomas/participle/v2"
@@ -21,14 +22,19 @@ const ParseErrorExit = 3
 // construct the clause database from an input file that was parsed correctly.
 const DatabaseConstructionErrorExit = 4
 
+// The TimeoutExit is the exit code for when solving times out.
+const TimeoutExit = 5
+
 func main() {
 
 	// Parse command-line arguments. Do the associated setup, then log what we
 	// got for debugging.
 	cfg := config.GetConfiguration()
 
-	// Keep track of statistics for this solver run.
+	// Keep track of statistics for this solver run. Also create a mutex so we
+	// don't print the statistics twice.
 	stats := stats.New(cfg.CSVStats)
+	printMutex := sync.Mutex{}
 
 	// Parse the input file.
 	t_ingest_start := time.Now()
@@ -66,13 +72,34 @@ func main() {
 	t_preproc_end := time.Now()
 	stats.PreprocessDuration = t_preproc_end.Sub(t_preproc_start)
 
+	// Run a goroutine to kill us on timeout. Only do this if we were in fact
+	// supplied a timeout.
+	if cfg.Timeout > 0 {
+		go func() {
+			// Wait for the timeout
+			time.Sleep(cfg.Timeout)
+			// Print results
+			printMutex.Lock()
+			defer printMutex.Unlock()
+			if cfg.PrintStats {
+				fmt.Println(stats)
+			} else {
+				fmt.Println("unknown")
+			}
+			// Die
+			os.Exit(TimeoutExit)
+		}()
+	}
+
 	// Solve. Make sure we get the right status.
 	status := theory.Solve(&db, cfg.Solver, &stats)
 	if exp := ast.GetStatus(); exp != file.StatusUnknown && exp != status {
 		panic("Solver returned wrong answer")
 	}
 
-	// Print the result.
+	// Print the result. Make sure we only print once.
+	printMutex.Lock()
+	defer printMutex.Unlock()
 	if cfg.PrintStats {
 		fmt.Println(stats)
 	} else {

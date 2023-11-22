@@ -643,22 +643,20 @@ func (db *DB) processIntEquOp(e file.EquOpBuilder, a0 expr, ctx context) (ret ex
 		panic("Unhandled case")
 	}
 
-	// Create the return literal.
+	// Create the return literal, and each expression.
 	ret = exprLit{Lit: db.newAtom()}
+	el := db.handleCmp(file.CmpOpLE, x, y, k)
+	er := db.handleCmp(file.CmpOpGE, x, y, k)
 
 	// Decide how they relate based on the operation.
 	switch e.Operation {
 	case file.EquOpEQ:
-		el := db.handleCmp(file.CmpOpLE, x, y, k)
-		er := db.handleCmp(file.CmpOpGE, x, y, k)
 		db.AddClauses(
 			[]Lit{el.Lit, -ret.Lit},
 			[]Lit{er.Lit, -ret.Lit},
 			[]Lit{-el.Lit, -er.Lit, ret.Lit},
 		)
 	case file.EquOpNE:
-		el := db.handleCmp(file.CmpOpLT, x, y, k)
-		er := db.handleCmp(file.CmpOpGT, x, y, k)
 		db.AddClauses(
 			[]Lit{el.Lit, ret.Lit},
 			[]Lit{er.Lit, ret.Lit},

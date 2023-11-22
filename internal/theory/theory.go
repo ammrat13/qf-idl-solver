@@ -4,9 +4,11 @@ package theory
 
 import (
 	"math/big"
+	"time"
 
 	"github.com/ammrat13/qf-idl-solver/internal/db"
 	"github.com/ammrat13/qf-idl-solver/internal/file"
+	"github.com/ammrat13/qf-idl-solver/internal/stats"
 )
 
 // A Node in the constraint graph is just a variable.
@@ -35,7 +37,7 @@ type Cycle = []db.VariableID
 // as the number of nodes in the graph. If a negative-weight cycle exists in the
 // conflict graph, it returns it. Otherwise, it returns an error.
 type Solver interface {
-	Solve(AdjacencyList) (Cycle, error)
+	Solve(AdjacencyList, *stats.Stats) (Cycle, error)
 
 	// The SetNumVar method tells the solver how many variables exist in the
 	// problem. This is called once before solving beings.
@@ -51,14 +53,20 @@ var Solvers = map[string]Solver{
 // The Solve function implements the high-level solving algorithm described in
 // class. In other words, it implements offline DPLL(T). It is complete - it
 // will never return unknown. It may panic though.
-func Solve(dbase *db.DB, thr Solver) file.Status {
+func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
 
 	// Do theory setup.
 	thr.SetNumVar(dbase.NextVariable)
 
 	for {
-		// SAT Solve. If unsat, return unsat.
+		stats.SolverCalls++
+
+		// SAT Solve.
+		t_sat_start := time.Now()
 		satres := dbase.SATSolve()
+		t_sat_end := time.Now()
+		stats.SATSolverDuration += t_sat_end.Sub(t_sat_start)
+		//If unsat, return unsat.
 		if satres == file.StatusUnsat {
 			return file.StatusUnsat
 		}
@@ -68,9 +76,10 @@ func Solve(dbase *db.DB, thr Solver) file.Status {
 		// adjacency list directly. In the second, we look for negative atoms,
 		// for which we have to add constraints to make sure we don't
 		// accidentally satisfy them.
+		t_adj_start := time.Now()
+		one := big.NewInt(1)
 		adjList := make(AdjacencyList)
 		for pospair, atoms := range dbase.Variables2AtomIDs {
-			one := big.NewInt(1)
 			negpair := db.VariablePair{
 				Fst: pospair.Snd,
 				Snd: pospair.Fst,
@@ -107,9 +116,14 @@ func Solve(dbase *db.DB, thr Solver) file.Status {
 				break
 			}
 		}
+		t_adj_end := time.Now()
+		stats.GraphOverheadDuration += t_adj_end.Sub(t_adj_start)
 
 		// Send the adjacency list to the theory solver.
-		cycle, err := thr.Solve(adjList)
+		t_thr_start := time.Now()
+		cycle, err := thr.Solve(adjList, stats)
+		t_thr_end := time.Now()
+		stats.TheorySolverDuration += t_thr_end.Sub(t_thr_start)
 		// If sat, we're done
 		if err != nil {
 			return file.StatusSat
@@ -117,25 +131,15 @@ func Solve(dbase *db.DB, thr Solver) file.Status {
 
 		// Otherwise, walk the returned cycle and add the newly learned
 		// constraints.
+		t_lrn_start := time.Now()
 		toAdd := make([]int, len(cycle))
 		for i := 0; i < len(cycle); i++ {
 			j := (i + 1) % len(cycle)
-
-			// Check that the values are in the maps.
-			var ok bool
-			_, ok = adjList[cycle[i]]
-			if !ok {
-				panic("Value not in map")
-			}
-			_, ok = adjList[cycle[i]][cycle[j]]
-			if !ok {
-				panic("Value not in map")
-			}
-
-			// Add the new constraint.
 			toAdd[i] = -adjList[cycle[i]][cycle[j]].Lit
 		}
 		dbase.AddClauses(toAdd)
+		t_lrn_end := time.Now()
+		stats.LearnOverheadDuration += t_lrn_end.Sub(t_lrn_start)
 	}
 }
 

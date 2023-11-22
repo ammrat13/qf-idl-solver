@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/alecthomas/participle/v2"
 	"github.com/ammrat13/qf-idl-solver/internal/config"
 	"github.com/ammrat13/qf-idl-solver/internal/db"
 	"github.com/ammrat13/qf-idl-solver/internal/file"
+	"github.com/ammrat13/qf-idl-solver/internal/stats"
 	"github.com/ammrat13/qf-idl-solver/internal/theory"
 )
 
@@ -25,7 +27,11 @@ func main() {
 	// got for debugging.
 	cfg := config.GetConfiguration()
 
+	// Keep track of statistics for this solver run.
+	stats := stats.Stats{}
+
 	// Parse the input file.
+	t_ingest_start := time.Now()
 	ast, err := file.Parse(cfg.Input)
 	if err != nil {
 		if erp, ok := err.(participle.Error); ok {
@@ -51,16 +57,23 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to construct database: %s\n", err.Error())
 		os.Exit(DatabaseConstructionErrorExit)
 	}
+	t_ingest_end := time.Now()
+	stats.IngestDuration = t_ingest_end.Sub(t_ingest_start)
 
 	// Run preprocessing.
+	t_preproc_start := time.Now()
 	cfg.Preprocessor.Preprocess(&db)
+	t_preproc_end := time.Now()
+	stats.PreprocessDuration = t_preproc_end.Sub(t_preproc_start)
 
 	// Solve. Make sure we get the right status.
-	status := theory.Solve(&db, cfg.Solver)
+	status := theory.Solve(&db, cfg.Solver, &stats)
 	if exp := ast.GetStatus(); exp != file.StatusUnknown && exp != status {
 		panic("Solver returned wrong answer")
 	}
 
 	// Print the result.
 	fmt.Println(status)
+
+	fmt.Println(stats)
 }

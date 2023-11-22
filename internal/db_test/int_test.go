@@ -7,6 +7,7 @@ import (
 
 	"github.com/ammrat13/qf-idl-solver/internal/db"
 	"github.com/ammrat13/qf-idl-solver/internal/file"
+	"github.com/ammrat13/qf-idl-solver/internal/stats"
 	"github.com/ammrat13/qf-idl-solver/internal/theory"
 )
 
@@ -371,7 +372,7 @@ func TestInequalitySolver(t *testing.T) {
 						t.FailNow()
 					}
 
-					if theory.Solve(&db, solver) != test.stat {
+					if theory.Solve(&db, solver, &stats.Stats{}) != test.stat {
 						t.Errorf("wrong satisfiability")
 					}
 				})

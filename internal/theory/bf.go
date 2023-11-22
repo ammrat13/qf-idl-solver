@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math/big"
 
+	"github.com/ammrat13/qf-idl-solver/internal/stats"
 	"github.com/gammazero/deque"
 )
 
@@ -57,7 +58,7 @@ type nodeData struct {
 	Depth uint
 }
 
-func (thr *BF) Solve(graph AdjacencyList) (ret Cycle, err error) {
+func (thr *BF) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err error) {
 
 	// Create the auxiliary structures.
 	thr.graph = graph
@@ -81,6 +82,7 @@ func (thr *BF) Solve(graph AdjacencyList) (ret Cycle, err error) {
 
 	var iteration uint = 0
 	for thr.queue.Len() != 0 {
+		stats.TheorySolverLoops++
 
 		// Consider edges from the node at the front of the queue
 		uIdx := thr.queue.PopFront()
@@ -109,16 +111,16 @@ func (thr *BF) Solve(graph AdjacencyList) (ret Cycle, err error) {
 
 				// If the new depth is too much, die
 				if vDat.Depth >= thr.numVar {
-					return thr.findCycleFrom(vIdx), nil
+					return thr.findCycleFrom(vIdx, stats), nil
 				}
 			}
 		}
 
 		// Amortized parent graph search
 		if iteration >= thr.numVar {
-			nd, err := thr.parentGraphSearch()
+			nd, err := thr.parentGraphSearch(stats)
 			if err == nil {
-				return thr.findCycleAt(nd), nil
+				return thr.findCycleAt(nd, stats), nil
 			}
 			iteration = 0
 		} else {
@@ -132,27 +134,29 @@ func (thr *BF) Solve(graph AdjacencyList) (ret Cycle, err error) {
 
 // The findCycleFrom function follows the path backwards from the node idx
 // looking for a cycle. If the node is not contained in a cycle, this panics.
-func (thr BF) findCycleFrom(idx Node) (ret Cycle) {
+func (thr BF) findCycleFrom(idx Node, stats *stats.Stats) (ret Cycle) {
 	// Implement tortise and hare
 	slow := idx
 	fast := idx
 	for {
+		stats.TheorySolverLoops++
 		slow = *thr.nodes[slow].Predecessor
 		fast = *thr.nodes[*thr.nodes[fast].Predecessor].Predecessor
 		if slow == fast {
-			return thr.findCycleAt(slow)
+			return thr.findCycleAt(slow, stats)
 		}
 	}
 }
 
 // The findCycleAt function finds a cycle containing the node idx. If that node
 // is not contained in a cycle, this infinite loops.
-func (thr BF) findCycleAt(idx Node) (ret Cycle) {
+func (thr BF) findCycleAt(idx Node, stats *stats.Stats) (ret Cycle) {
 	// Create the backing array for the cycle.
 	ret = make([]Node, 0, thr.numVar)
 	// Follow the predecessors until we find a repeat.
 	cur := idx
 	for {
+		stats.TheorySolverLoops++
 		ret = append(ret, cur)
 		cur = *thr.nodes[cur].Predecessor
 		if cur == idx {
@@ -170,7 +174,7 @@ func (thr BF) findCycleAt(idx Node) (ret Cycle) {
 // The parentGraphSearch function tries to find a cycle by following the
 // predecessors of each node. If it can find one, it returns a node in the
 // cycle. Otherwise, it returns an error.
-func (thr BF) parentGraphSearch() (ret Node, err error) {
+func (thr BF) parentGraphSearch(stats *stats.Stats) (ret Node, err error) {
 
 	// Node colors keep track of what state a node is in. Initially, all nodes
 	// are white for unexplored. When we enter, we set it to gray to mark that
@@ -192,6 +196,8 @@ func (thr BF) parentGraphSearch() (ret Node, err error) {
 	// node, this will return a node that's part of the cycl4e.
 	search := func(cur Node) (Node, error) {
 		for {
+			stats.TheorySolverLoops++
+			// Break into cases on the current node's color
 			switch nodeColorArray[cur] {
 			case nodeColorBlack:
 				return 0, errors.New("no cycle")
@@ -210,6 +216,7 @@ func (thr BF) parentGraphSearch() (ret Node, err error) {
 	// This helper function marks everything along a path as having no cycles.
 	finalize := func(cur Node) {
 		for {
+			stats.TheorySolverLoops++
 			// Early termination
 			if nodeColorArray[cur] == nodeColorBlack {
 				return

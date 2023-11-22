@@ -36,6 +36,9 @@ type Configuration struct {
 	// PrintStats reports whether we should print out statistics at the end
 	// rather than the result.
 	PrintStats bool
+	// CSVStats reports whether we should print statistics in CSV format instead
+	// of human-readable format. This value only matters when PrintStats is set.
+	CSVStats bool
 }
 
 // GetConfiguration looks at the command-line arguments passed to the program
@@ -62,6 +65,7 @@ func GetConfiguration() (ret Configuration) {
 	flag.StringVar(&ret.PreprocessorName, "preprocessor", "nil", "What preprocessor to use on the database")
 	flag.StringVar(&ret.SolverName, "solver", "", "What theory to use")
 	flag.BoolVar(&ret.PrintStats, "stats", false, "Print statistics instead of problem status")
+	flag.BoolVar(&ret.CSVStats, "csv", false, "Print statistics in CSV format")
 	flag.Parse()
 
 	// Now we have to handle the input file. First, check that we actually got

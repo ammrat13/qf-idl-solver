@@ -28,7 +28,7 @@ func main() {
 	cfg := config.GetConfiguration()
 
 	// Keep track of statistics for this solver run.
-	stats := stats.Stats{}
+	stats := stats.New(cfg.CSVStats)
 
 	// Parse the input file.
 	t_ingest_start := time.Now()

@@ -214,10 +214,9 @@ func TestInequality(t *testing.T) {
 			},
 			a2d: map[db.AtomID]*db.DifferenceConstraint{
 				3: {X: 0, Y: 1, K: big.NewInt(10)},
-				4: {X: 0, Y: 1, K: big.NewInt(10)},
 			},
 			v2a: map[db.VariablePair][]db.AtomID{
-				{Fst: 0, Snd: 1}: {3, 4},
+				{Fst: 0, Snd: 1}: {3},
 			},
 		},
 	}

@@ -5,6 +5,7 @@
 package db
 
 import (
+	"errors"
 	"math/big"
 
 	"github.com/ammrat13/qf-idl-solver/internal/file"
@@ -148,25 +149,45 @@ type DifferenceConstraint struct {
 	K *big.Int
 }
 
-// The makeAtomForDiff function takes in a [DifferenceConstraint] and creates an
-// [AtomID] corresponding to it. It also does all of the bookkeeping required
-// when adding difference constraints.
+// The GetAtomForDiff method tries to lookup the atom corresponding to a given
+// difference constraint.
 //
-// Note that we create a new value for each constraint. This is because we have
-// no good way to look up constraints in a map.
-func (db *DB) makeAtomForDiff(c DifferenceConstraint) (ret AtomID) {
-	// Create a new atom.
-	ret = db.newAtom()
-	// Add it to the atom map.
-	db.AtomID2Diff[ret] = &c
-	// Add it to the variable pair map.
+// Note that this takes linear time in the number of atoms already corresponding
+// to the variables in the constraint. However, this number is usually small,
+// and it's a one-time cost.
+func (db DB) GetAtomForDiff(c DifferenceConstraint) (AtomID, error) {
+	// Loop through the array and check to see if one matches.
 	vp := VariablePair{Fst: c.X, Snd: c.Y}
-	ds, ok := db.Variables2AtomIDs[vp]
-	if ok {
-		db.Variables2AtomIDs[vp] = append(ds, ret)
-	} else {
-		db.Variables2AtomIDs[vp] = []AtomID{ret}
+	for _, a := range db.Variables2AtomIDs[vp] {
+		// First, retrieve the constant corresponding to the atom.
+		k := db.AtomID2Diff[a].K
+		if k == nil {
+			panic("Inconsistent maps")
+		}
+		// Then, check if the constants match. We already know the variables
+		// match.
+		if k.Cmp(c.K) == 0 {
+			return a, nil
+		}
 	}
+	return 0, errors.New("could not find difference constraint")
+}
+
+// The makeAtomForDiff function tries to first lookup the difference constraint
+// and return the atom associated with it. Failing that, it creates a new atom
+// and updates the internal structures to register it.
+func (db *DB) makeAtomForDiff(c DifferenceConstraint) (ret AtomID) {
+	// First, check to see if it exists.
+	ret, err := db.GetAtomForDiff(c)
+	if err == nil {
+		return
+	}
+	// Otherwise, create a new atom.
+	ret = db.newAtom()
+	// Add it to the atom map and the variable pair map.
+	vp := VariablePair{Fst: c.X, Snd: c.Y}
+	db.AtomID2Diff[ret] = &c
+	db.Variables2AtomIDs[vp] = append(db.Variables2AtomIDs[vp], ret)
 	// Done
 	return
 }

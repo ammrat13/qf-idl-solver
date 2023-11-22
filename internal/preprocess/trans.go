@@ -29,26 +29,22 @@ func (Trans) Preprocess(db *db.DB) {
 			aj := atoms[j]
 
 			// Retrive the constants.
-			di, ok := db.AtomID2Diff[ai]
-			ki := di.K
-			if !ok || ki == nil {
+			ki := db.AtomID2Diff[ai].K
+			kj := db.AtomID2Diff[aj].K
+			if ki == nil || kj == nil {
 				panic("Atom not in AtomID2Diff")
 			}
-			dj, ok := db.AtomID2Diff[aj]
-			kj := dj.K
-			if !ok || kj == nil {
-				panic("Atom not in AtomID2Diff")
-			}
-			// The constraints should be in sorted order
+			// The constraints should be in sorted order, and they should be
+			// distinct.
 			if ki.Cmp(kj) == 1 {
 				panic("Atoms not in sorted order")
+			}
+			if ki.Cmp(kj) == 0 {
+				panic("Atoms not distinct")
 			}
 
 			// Add the constraints
 			db.AddClauses([]int{-ai, aj})
-			if ki.Cmp(kj) == 0 {
-				db.AddClauses([]int{-aj, ai})
-			}
 		}
 	}
 }

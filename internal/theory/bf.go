@@ -64,13 +64,13 @@ func (thr *BF) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err er
 	thr.graph = graph
 	thr.nodes = make([]nodeData, thr.numVar)
 	thr.queue = deque.New[Node]()
+	ZERO := big.NewInt(0)
 
 	// Initialize the nodes at depth zero.
 	for i := range thr.nodes {
-		zero := big.NewInt(0)
 		thr.nodes[i] = nodeData{
 			State:       nodeStateLabeled,
-			Distance:    zero,
+			Distance:    ZERO,
 			Predecessor: nil,
 			Depth:       0,
 		}

@@ -58,6 +58,9 @@ func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
 	// Do theory setup.
 	thr.SetNumVar(dbase.NextVariable)
 
+	// Auxiliary variables
+	ONE := big.NewInt(1)
+
 	for {
 		stats.SolverCalls++
 
@@ -71,13 +74,16 @@ func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
 			return file.StatusUnsat
 		}
 
-		// Otherwise, construct the adjacency list. We do this in two passes. In
-		// the first, we look for positive atoms, which we can inject into the
-		// adjacency list directly. In the second, we look for negative atoms,
-		// for which we have to add constraints to make sure we don't
-		// accidentally satisfy them.
-		t_adj_start := time.Now()
-		one := big.NewInt(1)
+		// Otherwise, construct the adjacency list.
+		//
+		// Logically, we do this in two passes. In the first, we look for
+		// positive atoms, which we can inject into the adjacency list directly.
+		// In the second, we look for negative atoms, for which we have to add
+		// constraints to make sure we don't accidentally satisfy them.
+		//
+		// Practically, we first scan through the adjacency list looking for the
+		// first positive and the last negative atoms.
+		t_graph_start := time.Now()
 		adjList := make(AdjacencyList)
 		for pospair, atoms := range dbase.Variables2AtomIDs {
 			negpair := db.VariablePair{
@@ -85,39 +91,52 @@ func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
 				Snd: pospair.Fst,
 			}
 
-			// Positive pass
+			// Iterate through the array looking for positive and negative
+			// atoms.
+			posFound := false
+			negFound := false
+			posI := 0
+			negI := 0
 			for i := 0; i < len(atoms); i++ {
 				atom := atoms[i]
-				if !dbase.Value(atom) {
-					continue
+				// Only record the first positive instance. Remember everything
+				// is sorted.
+				if !posFound && dbase.Value(atom) {
+					posFound = true
+					posI = i
 				}
+				// Remember the last negative instance.
+				if !dbase.Value(atom) {
+					negFound = true
+					negI = i
+				}
+			}
+
+			// Positive pass
+			if posFound {
+				atom := atoms[posI]
 				// Assert x <= y + k
 				addEdge(adjList, pospair, Edge{
 					Weight: dbase.AtomID2Diff[atom].K,
 					Lit:    atom,
 				})
-				break
 			}
 
 			// Negative pass
-			for i := len(atoms) - 1; i >= 0; i-- {
-				atom := atoms[i]
-				if dbase.Value(atom) {
-					continue
-				}
+			if negFound {
+				atom := atoms[negI]
 				// Assert x > y + k, which is equivalent to y <= x - k - 1
 				var newK *big.Int
 				newK = new(big.Int).Neg(dbase.AtomID2Diff[atom].K)
-				newK = newK.Sub(newK, one)
+				newK = newK.Sub(newK, ONE)
 				addEdge(adjList, negpair, Edge{
 					Weight: newK,
 					Lit:    -atom,
 				})
-				break
 			}
 		}
-		t_adj_end := time.Now()
-		stats.GraphOverheadDuration += t_adj_end.Sub(t_adj_start)
+		t_graph_end := time.Now()
+		stats.GraphOverheadDuration += t_graph_end.Sub(t_graph_start)
 
 		// Send the adjacency list to the theory solver.
 		t_thr_start := time.Now()

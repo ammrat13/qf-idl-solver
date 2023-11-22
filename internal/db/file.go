@@ -644,9 +644,9 @@ func (db *DB) processIntEquOp(e file.EquOpBuilder, a0 expr, ctx context) (ret ex
 	}
 
 	// Create the return literal, and each expression.
-	ret = exprLit{Lit: db.newAtom()}
 	el := db.handleCmp(file.CmpOpLE, x, y, k)
 	er := db.handleCmp(file.CmpOpGE, x, y, k)
+	ret = exprLit{Lit: db.newAtom()}
 
 	// Decide how they relate based on the operation.
 	switch e.Operation {

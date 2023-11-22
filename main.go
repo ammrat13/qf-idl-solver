@@ -35,6 +35,15 @@ func main() {
 	// don't print the statistics twice.
 	stats := stats.New(cfg.CSVStats)
 	printMutex := sync.Mutex{}
+	printResult := func(res string) {
+		printMutex.Lock()
+		defer printMutex.Unlock()
+		if cfg.PrintStats {
+			fmt.Println(stats)
+		} else {
+			fmt.Println(res)
+		}
+	}
 
 	// Parse the input file.
 	t_ingest_start := time.Now()
@@ -78,15 +87,8 @@ func main() {
 		go func() {
 			// Wait for the timeout
 			time.Sleep(cfg.Timeout)
-			// Print results
-			printMutex.Lock()
-			defer printMutex.Unlock()
-			if cfg.PrintStats {
-				fmt.Println(stats)
-			} else {
-				fmt.Println("unknown")
-			}
-			// Die
+			// Print results and die
+			printResult("unknown")
 			os.Exit(TimeoutExit)
 		}()
 	}
@@ -98,11 +100,5 @@ func main() {
 	}
 
 	// Print the result. Make sure we only print once.
-	printMutex.Lock()
-	defer printMutex.Unlock()
-	if cfg.PrintStats {
-		fmt.Println(stats)
-	} else {
-		fmt.Println(status)
-	}
+	printResult(status.String())
 }

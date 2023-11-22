@@ -32,6 +32,10 @@ type Configuration struct {
 	Solver theory.Solver
 	// SolverName is the name of the theory solver we will use.
 	SolverName string
+
+	// PrintStats reports whether we should print out statistics at the end
+	// rather than the result.
+	PrintStats bool
 }
 
 // GetConfiguration looks at the command-line arguments passed to the program
@@ -57,6 +61,7 @@ func GetConfiguration() (ret Configuration) {
 	// Handle command-line flags.
 	flag.StringVar(&ret.PreprocessorName, "preprocessor", "nil", "What preprocessor to use on the database")
 	flag.StringVar(&ret.SolverName, "solver", "", "What theory to use")
+	flag.BoolVar(&ret.PrintStats, "stats", false, "Print statistics instead of problem status")
 	flag.Parse()
 
 	// Now we have to handle the input file. First, check that we actually got

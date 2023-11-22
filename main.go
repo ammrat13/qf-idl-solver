@@ -73,7 +73,9 @@ func main() {
 	}
 
 	// Print the result.
-	fmt.Println(status)
-
-	fmt.Println(stats)
+	if cfg.PrintStats {
+		fmt.Println(stats)
+	} else {
+		fmt.Println(status)
+	}
 }

@@ -3,6 +3,7 @@
 package stats
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -36,4 +37,19 @@ type Stats struct {
 	// inside the theory solver. The precise meaning of this field will differ
 	// depending on the solver.
 	TheorySolverLoops uint64
+}
+
+// The String implementation for [Stats] dumps a CSV of the statistics.
+func (stats Stats) String() string {
+	return fmt.Sprintf(
+		"%d,%d,%d,%d,%d,%d,%d,%d",
+		stats.IngestDuration.Nanoseconds(),
+		stats.PreprocessDuration.Nanoseconds(),
+		stats.SATSolverDuration.Nanoseconds(),
+		stats.TheorySolverDuration.Nanoseconds(),
+		stats.GraphOverheadDuration.Nanoseconds(),
+		stats.LearnOverheadDuration.Nanoseconds(),
+		stats.SolverCalls,
+		stats.TheorySolverLoops,
+	)
 }

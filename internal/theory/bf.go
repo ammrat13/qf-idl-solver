@@ -13,6 +13,10 @@ type BF struct {
 	// The number of variables in this problem instance.
 	numVar uint
 
+	// The graph field is the input graph we're checking for negative cycles
+	// for. It always has numVar nodes numbered 0 to numVar-1.
+	graph AdjacencyList
+
 	// The nodes field consists of all the metadata we keep on a per-node basis.
 	// The index corresponds to the node number.
 	nodes []nodeData
@@ -56,6 +60,7 @@ type nodeData struct {
 func (thr *BF) Solve(graph AdjacencyList) (ret Cycle, err error) {
 
 	// Create the auxiliary structures.
+	thr.graph = graph
 	thr.nodes = make([]nodeData, thr.numVar)
 	thr.queue = deque.New[Node]()
 
@@ -74,13 +79,14 @@ func (thr *BF) Solve(graph AdjacencyList) (ret Cycle, err error) {
 		thr.queue.PushBack(uint(i))
 	}
 
+	var iteration uint = 0
 	for thr.queue.Len() != 0 {
 
 		// Consider edges from the node at the front of the queue
 		uIdx := thr.queue.PopFront()
 		uDat := &thr.nodes[uIdx]
 		// Look at all the outgoing edges.
-		for vIdx, edge := range graph[uIdx] {
+		for vIdx, edge := range thr.graph[uIdx] {
 			vDat := &thr.nodes[vIdx]
 
 			// Mark this vertex as scanned since it's no longer in the queue.
@@ -106,6 +112,17 @@ func (thr *BF) Solve(graph AdjacencyList) (ret Cycle, err error) {
 					return thr.findCycleFrom(vIdx), nil
 				}
 			}
+		}
+
+		// Amortized parent graph search
+		if iteration >= thr.numVar {
+			nd, err := thr.parentGraphSearch()
+			if err == nil {
+				return thr.findCycleAt(nd), nil
+			}
+			iteration = 0
+		} else {
+			iteration++
 		}
 	}
 
@@ -148,4 +165,73 @@ func (thr BF) findCycleAt(idx Node) (ret Cycle) {
 		ret[i], ret[j] = ret[j], ret[i]
 	}
 	return
+}
+
+// The parentGraphSearch function tries to find a cycle by following the
+// predecessors of each node. If it can find one, it returns a node in the
+// cycle. Otherwise, it returns an error.
+func (thr BF) parentGraphSearch() (ret Node, err error) {
+
+	// Node colors keep track of what state a node is in. Initially, all nodes
+	// are white for unexplored. When we enter, we set it to gray to mark that
+	// we're currently exploring. When we exit, we set it to black to mark that
+	// we're done.
+	type nodeColor int
+	const (
+		nodeColorWhite nodeColor = iota
+		nodeColorGray
+		nodeColorBlack
+	)
+
+	// Create an array to store the colors of each node. Initially, all are
+	// white.
+	nodeColorArray := make([]nodeColor, thr.numVar)
+
+	// This helper function goes up toward the root starting at a node, marking
+	// the intermediate steps as grey. If there is a cycle starting at that
+	// node, this will return a node that's part of the cycl4e.
+	search := func(cur Node) (Node, error) {
+		for {
+			switch nodeColorArray[cur] {
+			case nodeColorBlack:
+				return 0, errors.New("no cycle")
+			case nodeColorGray:
+				return cur, nil
+			case nodeColorWhite:
+				nodeColorArray[cur] = nodeColorGray
+				if pred := thr.nodes[cur].Predecessor; pred != nil {
+					cur = *pred
+				} else {
+					return 0, errors.New("no cycle")
+				}
+			}
+		}
+	}
+	// This helper function marks everything along a path as having no cycles.
+	finalize := func(cur Node) {
+		for {
+			// Early termination
+			if nodeColorArray[cur] == nodeColorBlack {
+				return
+			}
+			// Normal path
+			nodeColorArray[cur] = nodeColorBlack
+			if pred := thr.nodes[cur].Predecessor; pred != nil {
+				cur = *pred
+			} else {
+				return
+			}
+		}
+	}
+
+	// Search every vertex to check for a cycle.
+	for i := uint(0); i < thr.numVar; i++ {
+		ret, err = search(i)
+		if err == nil {
+			return
+		} else {
+			finalize(i)
+		}
+	}
+	return 0, errors.New("no cycle")
 }

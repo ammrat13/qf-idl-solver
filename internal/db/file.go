@@ -462,7 +462,7 @@ func (db *DB) handleLookupCmp(op file.CmpOp, nX, nY string, k *big.Int, ctx cont
 	return db.handleCmp(op, vX.Var, vY.Var, k), nil
 }
 
-func (db *DB) handleCmp(op file.CmpOp, x, y VariableID, k *big.Int) exprLit {
+func (db *DB) handleCmp(op file.CmpOp, x, y VariableID, k *big.Int) (ret exprLit) {
 
 	// Normalize to <=
 	if op != file.CmpOpLE {
@@ -470,9 +470,13 @@ func (db *DB) handleCmp(op file.CmpOp, x, y VariableID, k *big.Int) exprLit {
 		case file.CmpOpGE:
 			return db.handleCmp(file.CmpOpLE, y, x, new(big.Int).Neg(k))
 		case file.CmpOpLT:
-			return db.handleCmp(file.CmpOpGE, x, y, k)
+			ret = db.handleCmp(file.CmpOpGE, x, y, k)
+			ret.Lit = -ret.Lit
+			return
 		case file.CmpOpGT:
-			return db.handleCmp(file.CmpOpLE, x, y, k)
+			ret = db.handleCmp(file.CmpOpLE, x, y, k)
+			ret.Lit = -ret.Lit
+			return
 		default:
 			panic("Invalid comparison operation")
 		}
@@ -639,20 +643,22 @@ func (db *DB) processIntEquOp(e file.EquOpBuilder, a0 expr, ctx context) (ret ex
 		panic("Unhandled case")
 	}
 
-	// Compute the two inequalities, and the return.
-	el := db.handleCmp(file.CmpOpLE, x, y, k)
-	er := db.handleCmp(file.CmpOpGE, x, y, k)
+	// Create the return literal.
 	ret = exprLit{Lit: db.newAtom()}
 
 	// Decide how they relate based on the operation.
 	switch e.Operation {
 	case file.EquOpEQ:
+		el := db.handleCmp(file.CmpOpLE, x, y, k)
+		er := db.handleCmp(file.CmpOpGE, x, y, k)
 		db.AddClauses(
 			[]Lit{el.Lit, -ret.Lit},
 			[]Lit{er.Lit, -ret.Lit},
 			[]Lit{-el.Lit, -er.Lit, ret.Lit},
 		)
 	case file.EquOpNE:
+		el := db.handleCmp(file.CmpOpLT, x, y, k)
+		er := db.handleCmp(file.CmpOpGT, x, y, k)
 		db.AddClauses(
 			[]Lit{el.Lit, ret.Lit},
 			[]Lit{er.Lit, ret.Lit},

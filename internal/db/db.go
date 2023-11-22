@@ -33,7 +33,7 @@ type DB struct {
 	NextAtom int
 	// The NextVariable field reads how many variables have been created. It is
 	// also the value of the next variable to be created.
-	NextVariable uint64
+	NextVariable uint
 
 	// The AtomIDToDiff map goes from atom identifiers to [DifferenceConstraint]
 	// in the problem. If an ID doesn't show up in the domain, it has no
@@ -62,7 +62,7 @@ func (db *DB) AddClauses(clauses ...[]Lit) {
 }
 
 // The SATSolve method runs solving on the known clauses. It doesn't consider
-// any theory.
+// any theory. It panics if the solver returns unknown.
 func (db *DB) SATSolve() file.Status {
 	switch db.Clauses.Solve() {
 	case 1:
@@ -70,7 +70,7 @@ func (db *DB) SATSolve() file.Status {
 	case -1:
 		return file.StatusUnsat
 	default:
-		return file.StatusUnknown
+		panic("SAT Solver returned unknown")
 	}
 }
 
@@ -104,21 +104,20 @@ func ToAtomID(l Lit) AtomID {
 
 // The NewAtom method creates a new [AtomID] for use in clauses.
 func (db *DB) newAtom() (ret AtomID) {
-	// Do bounds checking.
-	if db.NextAtom < 1 {
-		panic("Too many atoms")
-	}
-	// Return and increment. It's fine if this overflows since we'll catch it on
-	// the next one.
+	// Return and increment.
 	ret = db.NextAtom
 	db.NextAtom = db.NextAtom + 1
+	// Panic if it overflowed, otherwise return
+	if db.NextAtom == 0 {
+		panic("Too many variables")
+	}
 	return
 }
 
 // VariableIDs are assigned to each symbol of sort Int. These are used by
 // [DifferenceConstraint] to keep track of which variables take part in the
 // constraint.
-type VariableID = uint64
+type VariableID = uint
 
 // A VariablePair is an ordered pair of two variables. These are used by the
 // [DB] to store difference constraints by the variables they reference.

@@ -27,7 +27,7 @@ type Edge struct {
 // second variable is not present, there is no edge to that vertex.
 type AdjacencyList = map[Node]map[Node]Edge
 
-// A Cycle is a list of [Nodes] such that all adjacent ones are adjacent, and
+// A Cycle is a list of [Node] such that all consecutive ones are adjacent, and
 // the last one is adjacent to the first.
 type Cycle = []db.VariableID
 
@@ -35,26 +35,30 @@ type Cycle = []db.VariableID
 // as the number of nodes in the graph. If a negative-weight cycle exists in the
 // conflict graph, it returns it. Otherwise, it returns an error.
 type Solver interface {
-	Solve(AdjacencyList, uint64) (Cycle, error)
+	Solve(AdjacencyList) (Cycle, error)
+
+	// The SetNumVar method tells the solver how many variables exist in the
+	// problem. This is called once before solving beings.
+	SetNumVar(uint)
 }
 
 // The Solvers variable stores a map from strings to the [Solver] they are
 // associated with. We use this map when processing command-line arguments.
 var Solvers = map[string]Solver{
-	"bf": BF{},
+	"bf": &BF{},
 }
 
 // The Solve function implements the high-level solving algorithm described in
 // class. In other words, it implements offline DPLL(T). It is complete - it
 // will never return unknown. It may panic though.
 func Solve(db *db.DB, thr Solver) file.Status {
+
+	// Do theory setup.
+	thr.SetNumVar(db.NextVariable)
+
 	for {
-		// SAT Solve.
+		// SAT Solve. If unsat, return unsat.
 		satres := db.SATSolve()
-		if satres == file.StatusUnknown {
-			panic("SAT solver returned unknown")
-		}
-		// If unsat, return unsat
 		if satres == file.StatusUnsat {
 			return file.StatusUnsat
 		}
@@ -70,23 +74,24 @@ func Solve(db *db.DB, thr Solver) file.Status {
 					continue
 				}
 
-				// Make sure the first variable is populated.
-				_, ok = adjList[varpair.Fst]
+				// Make sure the source (second) variable is populated.
+				_, ok = adjList[varpair.Snd]
 				if !ok {
-					adjList[varpair.Fst] = make(map[Node]Edge)
+					adjList[varpair.Snd] = make(map[Node]Edge)
 				}
 				// Get the constant value for the atom.
 				k := db.AtomID2Diff[atom].K
 				if k == nil {
 					panic("Bad constant")
 				}
-				// Add it to the adjacency list.
-				adjList[varpair.Fst][varpair.Snd] = Edge{Weight: k, Atom: atom}
+				// Add it to the adjacency list only.
+				adjList[varpair.Snd][varpair.Fst] = Edge{Weight: k, Atom: atom}
+				break
 			}
 		}
 
 		// Send the adjacency list to the theory solver.
-		cycle, err := thr.Solve(adjList, db.NextVariable)
+		cycle, err := thr.Solve(adjList)
 		// If sat, we're done
 		if err != nil {
 			return file.StatusSat

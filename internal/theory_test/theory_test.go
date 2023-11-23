@@ -9,6 +9,11 @@ import (
 	"github.com/ammrat13/qf-idl-solver/internal/theory"
 )
 
+// The fuzzTheory function takes in a theory solver and checks that it behaves
+// consistently. Specifically, it checks that it doesn't return a negative cycle
+// when all the weights are positive, and it checks that all the negative cycles
+// returned are in fact negative. Note that this is not a complete correctness
+// specification.
 func fuzzTheory(f *testing.F, thr theory.Solver) {
 
 	f.Add([]byte("\x00\x00\x00\x00"), false)

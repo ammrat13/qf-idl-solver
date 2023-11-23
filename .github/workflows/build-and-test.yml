@@ -2,7 +2,7 @@ name: Build and Test Workflow
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/github-actions]
   pull_request:
 
 permissions:

@@ -31,6 +31,7 @@ jobs:
           go install gotest.tools/gotestsum@latest
 
       - name: Build
+        id: build
         run: go build -v .
       - name: Package Binary
         uses: actions/upload-artifact@v3
@@ -44,4 +45,4 @@ jobs:
         uses: test-summary/action@v2
         with:
           paths: ./unit-tests.xml
-        if: always()
+        if: ${{ always() && steps.build.outcome == 'success' }}

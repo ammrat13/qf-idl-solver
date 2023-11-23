@@ -2,10 +2,8 @@ name: Build and Test Workflow
 
 on:
   push:
-    branches: [main, feature/github-actions]
+    branches: [main]
   pull_request:
-
-# Test cache
 
 permissions:
   contents: read

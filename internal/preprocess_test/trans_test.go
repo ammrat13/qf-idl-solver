@@ -12,12 +12,12 @@ import (
 
 func TestTrans(t *testing.T) {
 	preprocessors := map[string]preprocess.Preprocessor{
-		"trans_lin":  preprocess.TransLin{},
-		"trans_quad": preprocess.TransQuad{},
+		"trans-lin":  preprocess.TransLin{},
+		"trans-quad": preprocess.TransQuad{},
 	}
 	tests := map[string]struct {
 		base    db.DB
-		clauses [][]int
+		clauses [][]db.Lit
 		stat    file.Status
 	}{
 		"basic_sat": {
@@ -30,7 +30,7 @@ func TestTrans(t *testing.T) {
 					{Fst: 0, Snd: 1}: {3, 4},
 				},
 			},
-			clauses: [][]int{
+			clauses: [][]db.Lit{
 				{1},
 				{-2},
 				{3},
@@ -48,7 +48,7 @@ func TestTrans(t *testing.T) {
 					{Fst: 0, Snd: 1}: {3, 4},
 				},
 			},
-			clauses: [][]int{
+			clauses: [][]db.Lit{
 				{1},
 				{-2},
 				{-3},
@@ -66,7 +66,7 @@ func TestTrans(t *testing.T) {
 					{Fst: 0, Snd: 1}: {3, 4},
 				},
 			},
-			clauses: [][]int{
+			clauses: [][]db.Lit{
 				{1},
 				{-2},
 				{-3},
@@ -84,7 +84,7 @@ func TestTrans(t *testing.T) {
 					{Fst: 0, Snd: 1}: {3, 4},
 				},
 			},
-			clauses: [][]int{
+			clauses: [][]db.Lit{
 				{1},
 				{-2},
 				{3},

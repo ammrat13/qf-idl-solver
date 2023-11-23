@@ -147,7 +147,7 @@ func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
 		// Otherwise, walk the returned cycle and add the newly learned
 		// constraints.
 		t_lrn_start := time.Now()
-		toAdd := make([]int, len(cycle))
+		toAdd := make([]db.Lit, len(cycle))
 		for i := 0; i < len(cycle); i++ {
 			j := (i + 1) % len(cycle)
 			toAdd[i] = -adjList[cycle[i]][cycle[j]].Lit

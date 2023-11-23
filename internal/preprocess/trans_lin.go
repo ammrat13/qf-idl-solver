@@ -10,10 +10,10 @@ import (
 // atoms associated with a pair of variables.
 type TransLin struct{}
 
-func (TransLin) Preprocess(db *db.DB) {
+func (TransLin) Preprocess(dbase *db.DB) {
 
 	// For each pair of variables, add constraints.
-	for _, atoms := range db.Variables2AtomIDs {
+	for _, atoms := range dbase.Variables2AtomIDs {
 		// Transitivity only applies between two different constraints. If we
 		// don't have that many, bail.
 		if len(atoms) < 2 {
@@ -30,8 +30,8 @@ func (TransLin) Preprocess(db *db.DB) {
 			aj := atoms[j]
 
 			// Retrive the constants.
-			ki := db.AtomID2Diff[ai].K
-			kj := db.AtomID2Diff[aj].K
+			ki := dbase.AtomID2Diff[ai].K
+			kj := dbase.AtomID2Diff[aj].K
 			if ki == nil || kj == nil {
 				panic("Atom not in AtomID2Diff")
 			}
@@ -45,7 +45,7 @@ func (TransLin) Preprocess(db *db.DB) {
 			}
 
 			// Add the constraints
-			db.AddClauses([]int{-ai, aj})
+			dbase.AddClauses([]db.Lit{-ai, aj})
 		}
 	}
 }

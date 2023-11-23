@@ -20,6 +20,7 @@ type Preprocessor interface {
 // arguments.
 var Preprocessors = map[string]Preprocessor{
 	"nil":        Nil{},
-	"trans_lin":  TransLin{},
-	"trans_quad": TransQuad{},
+	"trans-lin":  TransLin{},
+	"trans-quad": TransQuad{},
+	"tie-lin":    TIELin{},
 }

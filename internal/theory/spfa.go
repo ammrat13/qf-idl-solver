@@ -6,7 +6,7 @@ import (
 
 	"github.com/ammrat13/qf-idl-solver/internal/stats"
 	"github.com/gammazero/deque"
-)
+)a
 
 // SPFA is an implementation of the Bellman-Ford theory solver. It uses SPFA
 // under the hood, with amortized parent graph search for negative cycle

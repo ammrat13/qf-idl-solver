@@ -30,6 +30,11 @@ jobs:
 
       - name: Build
         run: go build -v .
+      - name: Package Binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: qf-idl-solver
+          path: ./qf-idl-solver
 
       - name: Test
         run: go test -short ./...

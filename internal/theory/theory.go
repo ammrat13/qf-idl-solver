@@ -47,7 +47,8 @@ type Solver interface {
 // The Solvers variable stores a map from strings to the [Solver] they are
 // associated with. We use this map when processing command-line arguments.
 var Solvers = map[string]Solver{
-	"bf": &BF{},
+	"spfa-basic": &SPFA{BasicMode: true},
+	"spfa":       &SPFA{BasicMode: false},
 }
 
 // The Solve function implements the high-level solving algorithm described in

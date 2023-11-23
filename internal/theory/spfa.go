@@ -8,13 +8,12 @@ import (
 	"github.com/gammazero/deque"
 )
 
-// BF is an implementation of the Bellman-Ford theory solver. It uses SPFA under
-// the hood, with amortized parent graph search for negative cycle detection.
-type BF struct {
-	// The DisableParentGraphSearch field disables amortized parent graph
-	// search. It exists only for testing, and should not be set in production
-	// runs.
-	DisableParentGraphSearch bool
+// SPFA is an implementation of the Bellman-Ford theory solver. It uses SPFA
+// under the hood, with amortized parent graph search for negative cycle
+// detection.
+type SPFA struct {
+	// The BasicMode field disables amortized parent graph search.
+	BasicMode bool
 
 	// The number of variables in this problem instance.
 	numVar uint
@@ -30,7 +29,7 @@ type BF struct {
 	queue *deque.Deque[Node]
 }
 
-func (thr *BF) SetNumVar(numVar uint) { thr.numVar = numVar }
+func (thr *SPFA) SetNumVar(numVar uint) { thr.numVar = numVar }
 
 // A nodeState describes the different states a vertex can be in in the
 // unlabeled / labeled / scanned paradigm. The Bellman-Ford algorithm only uses
@@ -64,7 +63,7 @@ type nodeData struct {
 	Relaxations uint
 }
 
-func (thr *BF) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err error) {
+func (thr *SPFA) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err error) {
 
 	// Create the auxiliary structures.
 	thr.graph = graph
@@ -132,7 +131,7 @@ func (thr *BF) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err er
 
 			// Amortized parent graph search. Do this in the inner loop since
 			// inner loops are O(1).
-			if !thr.DisableParentGraphSearch {
+			if !thr.BasicMode {
 				if iteration >= thr.numVar {
 					nd, err := thr.parentGraphSearch(stats)
 					if err == nil {
@@ -152,7 +151,7 @@ func (thr *BF) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err er
 
 // The findCycleFrom function follows the path backwards from the node idx
 // looking for a cycle. If the node is not contained in a cycle, this panics.
-func (thr BF) findCycleFrom(idx Node, stats *stats.Stats) (ret Cycle) {
+func (thr SPFA) findCycleFrom(idx Node, stats *stats.Stats) (ret Cycle) {
 	// Implement tortise and hare
 	slow := idx
 	fast := idx
@@ -168,7 +167,7 @@ func (thr BF) findCycleFrom(idx Node, stats *stats.Stats) (ret Cycle) {
 
 // The findCycleAt function finds a cycle containing the node idx. If that node
 // is not contained in a cycle, this infinite loops.
-func (thr BF) findCycleAt(idx Node, stats *stats.Stats) (ret Cycle) {
+func (thr SPFA) findCycleAt(idx Node, stats *stats.Stats) (ret Cycle) {
 	// Create the backing array for the cycle.
 	ret = make([]Node, 0, thr.numVar)
 	// Follow the predecessors until we find a repeat.
@@ -192,7 +191,7 @@ func (thr BF) findCycleAt(idx Node, stats *stats.Stats) (ret Cycle) {
 // The parentGraphSearch function tries to find a cycle by following the
 // predecessors of each node. If it can find one, it returns a node in the
 // cycle. Otherwise, it returns an error.
-func (thr BF) parentGraphSearch(stats *stats.Stats) (ret Node, err error) {
+func (thr SPFA) parentGraphSearch(stats *stats.Stats) (ret Node, err error) {
 
 	// Node colors keep track of what state a node is in. Initially, all nodes
 	// are white for unexplored. When we enter, we set it to gray to mark that

@@ -31,10 +31,6 @@ func fuzzTheory(f *testing.F, thr theory.Solver) {
 		for i := uint(0); i < N; i++ {
 			adjList[i] = make(map[theory.Node]theory.Edge)
 			for j := uint(0); j < N; j++ {
-				// Ban self-loops
-				if i == j {
-					continue
-				}
 				// Compute the weight depending on the shift.
 				weight := int64(graphData[i*N+j])
 				if shift {
@@ -77,6 +73,5 @@ func fuzzTheory(f *testing.F, thr theory.Solver) {
 	})
 }
 
-func FuzzBFFull(f *testing.F) { fuzzTheory(f, &theory.BF{}) }
-
-func FuzzBFBasic(f *testing.F) { fuzzTheory(f, &theory.BF{DisableParentGraphSearch: true}) }
+func FuzzSPFABasic(f *testing.F) { fuzzTheory(f, &theory.SPFA{BasicMode: true}) }
+func FuzzSPFAFull(f *testing.F)  { fuzzTheory(f, &theory.SPFA{BasicMode: false}) }

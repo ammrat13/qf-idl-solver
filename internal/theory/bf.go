@@ -23,6 +23,11 @@ type BF struct {
 	nodes []nodeData
 	// The queue field represents the queue we use for SPFA.
 	queue *deque.Deque[Node]
+
+	// The DisableParentGraphSearch field disables amortized parent graph
+	// search. It exists only for testing, and should not be set in production
+	// runs.
+	DisableParentGraphSearch bool
 }
 
 func (thr *BF) SetNumVar(numVar uint) { thr.numVar = numVar }
@@ -53,9 +58,10 @@ type nodeData struct {
 	// path. A nil predecessor means this is a root in the forest.
 	Predecessor *Node
 
-	// The Depth field indicates how many nodes were before this one in the
-	// shortest path. This is equivalent to the number of edges.
-	Depth uint
+	// The Relaxations field indicates how many times this node has been popped
+	// from the queue. A node can only be popped so many times before
+	// participating in a cycle.
+	Relaxations uint
 }
 
 func (thr *BF) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err error) {
@@ -72,7 +78,7 @@ func (thr *BF) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err er
 			State:       nodeStateLabeled,
 			Distance:    ZERO,
 			Predecessor: nil,
-			Depth:       0,
+			Relaxations: 0,
 		}
 	}
 	// Add all the nodes to the queue.
@@ -82,14 +88,29 @@ func (thr *BF) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err er
 
 	var iteration uint = 0
 	for thr.queue.Len() != 0 {
-		stats.TheorySolverLoops++
-
 		// Consider edges from the node at the front of the queue
 		uIdx := thr.queue.PopFront()
 		uDat := &thr.nodes[uIdx]
+
+		// Check if we've relaxed too many times. Each relaxation extends the
+		// number of edges we're considering by one, so we need to relax n times
+		// before we're guaranteed a cycle. We therefore die on the n+1th
+		// dequeue since by then we'd have relaxed n times.
+		//
+		// Another way to see this is to note that Bellman-Ford relaxes n-1
+		// times, then checks if a further relaxation happened on the nth
+		// iteration. Equivalently, it can check if any vertex is in the queue
+		// for the n+1th iteration, which means a relaxation happened on the
+		// nth.
+		if uDat.Relaxations > thr.numVar {
+			return thr.findCycleFrom(uIdx, stats), nil
+		}
+		uDat.Relaxations++
+
 		// Look at all the outgoing edges.
 		for vIdx, edge := range thr.graph[uIdx] {
 			vDat := &thr.nodes[vIdx]
+			stats.TheorySolverLoops++
 
 			// Mark this vertex as scanned since it's no longer in the queue.
 			uDat.State = nodeStateScanned
@@ -107,24 +128,21 @@ func (thr *BF) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err er
 				vDat.State = nodeStateLabeled
 				vDat.Distance = vDist
 				vDat.Predecessor = &uIdx
-				vDat.Depth = uDat.Depth + 1
+			}
 
-				// If the new depth is too much, die
-				if vDat.Depth >= thr.numVar {
-					return thr.findCycleFrom(vIdx, stats), nil
+			// Amortized parent graph search. Do this in the inner loop since
+			// inner loops are O(1).
+			if !thr.DisableParentGraphSearch {
+				if iteration >= thr.numVar {
+					nd, err := thr.parentGraphSearch(stats)
+					if err == nil {
+						return thr.findCycleAt(nd, stats), nil
+					}
+					iteration = 0
+				} else {
+					iteration++
 				}
 			}
-		}
-
-		// Amortized parent graph search
-		if iteration >= thr.numVar {
-			nd, err := thr.parentGraphSearch(stats)
-			if err == nil {
-				return thr.findCycleAt(nd, stats), nil
-			}
-			iteration = 0
-		} else {
-			iteration++
 		}
 	}
 

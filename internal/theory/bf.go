@@ -11,6 +11,11 @@ import (
 // BF is an implementation of the Bellman-Ford theory solver. It uses SPFA under
 // the hood, with amortized parent graph search for negative cycle detection.
 type BF struct {
+	// The DisableParentGraphSearch field disables amortized parent graph
+	// search. It exists only for testing, and should not be set in production
+	// runs.
+	DisableParentGraphSearch bool
+
 	// The number of variables in this problem instance.
 	numVar uint
 
@@ -23,11 +28,6 @@ type BF struct {
 	nodes []nodeData
 	// The queue field represents the queue we use for SPFA.
 	queue *deque.Deque[Node]
-
-	// The DisableParentGraphSearch field disables amortized parent graph
-	// search. It exists only for testing, and should not be set in production
-	// runs.
-	DisableParentGraphSearch bool
 }
 
 func (thr *BF) SetNumVar(numVar uint) { thr.numVar = numVar }

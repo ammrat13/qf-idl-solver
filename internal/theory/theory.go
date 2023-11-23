@@ -42,6 +42,10 @@ type Solver interface {
 	// The SetNumVar method tells the solver how many variables exist in the
 	// problem. This is called once before solving beings.
 	SetNumVar(uint)
+
+	// The Copy method creates a deep copy of this solver instance. This is
+	// needed since solver instances are pointers.
+	Copy() Solver
 }
 
 // The Solvers variable stores a map from strings to the [Solver] they are

@@ -14,7 +14,7 @@ import (
 // when all the weights are positive, and it checks that all the negative cycles
 // returned are in fact negative. Note that this is not a complete correctness
 // specification.
-func fuzzTheory(f *testing.F, thr theory.Solver) {
+func fuzzTheory(f *testing.F, th theory.Solver) {
 
 	f.Add([]byte("\x00\x00\x00\x00"), false)
 	f.Add([]byte("\x80\x80\x80\x80"), false)
@@ -49,7 +49,7 @@ func fuzzTheory(f *testing.F, thr theory.Solver) {
 		}
 
 		// Run the theory solver
-		t.Log(adjList)
+		thr := th.Copy()
 		thr.SetNumVar(N)
 		cyc, err := thr.Solve(adjList, &stats.Stats{})
 

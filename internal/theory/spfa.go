@@ -30,6 +30,7 @@ type SPFA struct {
 }
 
 func (thr *SPFA) SetNumVar(numVar uint) { thr.numVar = numVar }
+func (thr SPFA) Copy() Solver           { return &SPFA{BasicMode: thr.BasicMode, numVar: thr.numVar} }
 
 // A nodeState describes the different states a vertex can be in in the
 // unlabeled / labeled / scanned paradigm. The Bellman-Ford algorithm only uses
@@ -91,17 +92,14 @@ func (thr *SPFA) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err 
 		uIdx := thr.queue.PopFront()
 		uDat := &thr.nodes[uIdx]
 
-		// Check if we've relaxed too many times. Each relaxation extends the
-		// number of edges we're considering by one, so we need to relax n times
-		// before we're guaranteed a cycle. We therefore die on the n+1th
-		// dequeue since by then we'd have relaxed n times.
-		//
-		// Another way to see this is to note that Bellman-Ford relaxes n-1
-		// times, then checks if a further relaxation happened on the nth
-		// iteration. Equivalently, it can check if any vertex is in the queue
-		// for the n+1th iteration, which means a relaxation happened on the
-		// nth.
-		if uDat.Relaxations > thr.numVar {
+		// Mark this vertex as scanned since it's no longer in the queue.
+		uDat.State = nodeStateScanned
+
+		// With Bellman-Ford, relaxations can only occur n-1 times before we
+		// know a cycle exists. Therefore, break if we've relaxed a node more
+		// than that. Note that the number of times a node has been dequeued is
+		// a lower bound on the number of "passes" we've done.
+		if uDat.Relaxations >= thr.numVar {
 			return thr.findCycleFrom(uIdx, stats), nil
 		}
 		uDat.Relaxations++
@@ -110,9 +108,6 @@ func (thr *SPFA) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err 
 		for vIdx, edge := range thr.graph[uIdx] {
 			vDat := &thr.nodes[vIdx]
 			stats.TheorySolverLoops++
-
-			// Mark this vertex as scanned since it's no longer in the queue.
-			uDat.State = nodeStateScanned
 
 			// Compute the new distance to the node. Check if it's less than the
 			// current label.

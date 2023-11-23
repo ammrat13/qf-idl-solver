@@ -23,4 +23,5 @@ var Preprocessors = map[string]Preprocessor{
 	"trans-lin":  TransLin{},
 	"trans-quad": TransQuad{},
 	"tie-lin":    TIELin{},
+	"tie-quad":   TIEQuad{},
 }

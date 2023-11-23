@@ -2,18 +2,17 @@ package preprocess
 
 import (
 	"math/big"
-	"sort"
 
 	"github.com/ammrat13/qf-idl-solver/internal/db"
 )
 
-// The TIELin preprocessor applies all the preprocessing rules, effectively
-// eagerly adding constraints for each pair of difference constraints. However,
-// it only applies it to ones that imply all the others so that the number of
-// extra clauses is linear.
-type TIELin struct{}
+// The TIEQuad preprocessor applies all the preprocessing rules, effectively
+// eagerly adding constraints for each pair of difference constraints. It does
+// so by looping over all the possibilities, causing a quadratic increase in the
+// number of clauses.
+type TIEQuad struct{}
 
-func (TIELin) Preprocess(dbase *db.DB) {
+func (TIEQuad) Preprocess(dbase *db.DB) {
 
 	// Auxiliary variables
 	ONE := big.NewInt(1)
@@ -34,7 +33,7 @@ func (TIELin) Preprocess(dbase *db.DB) {
 			continue
 		}
 
-		// For each atom in the positive pair, analyze the negative pair.
+		// For each atom in the positive pair...
 		for i := 0; i < len(posatoms); i++ {
 			ai := posatoms[i]
 			ki := dbase.AtomID2Diff[ai].K
@@ -50,34 +49,22 @@ func (TIELin) Preprocess(dbase *db.DB) {
 			threshold = new(big.Int).Neg(ki)
 			threshold = threshold.Sub(threshold, ONE)
 
-			// Find the start of the inclusion range.
-			inclJ := sort.Search(len(negatoms), func(j int) bool {
+			// ... analyze the negative pair
+			for j := 0; j < len(negatoms); j++ {
 				aj := negatoms[j]
 				kj := dbase.AtomID2Diff[aj].K
 				if kj == nil {
 					panic("Atom not in AtomID2Diff")
 				}
-				return threshold.Cmp(kj) <= 0
-			})
-			// Handle inclusion
-			if inclJ < len(negatoms) {
-				aInclJ := negatoms[inclJ]
-				dbase.AddClauses([]db.Lit{ai, aInclJ})
-			}
 
-			// Find just past the end of the exclusion range.
-			exclJ := sort.Search(len(negatoms), func(j int) bool {
-				aj := negatoms[j]
-				kj := dbase.AtomID2Diff[aj].K
-				if kj == nil {
-					panic("Atom not in AtomID2Diff")
+				// Handle inclusion
+				if threshold.Cmp(kj) <= 0 {
+					dbase.AddClauses([]db.Lit{ai, aj})
 				}
-				return threshold.Cmp(kj) < 0
-			})
-			// Handle exclusion
-			if exclJ > 0 {
-				aExclJ := negatoms[exclJ-1]
-				dbase.AddClauses([]db.Lit{-ai, -aExclJ})
+				// Handle exclusion
+				if threshold.Cmp(kj) >= 0 {
+					dbase.AddClauses([]db.Lit{-ai, -aj})
+				}
 			}
 		}
 	}

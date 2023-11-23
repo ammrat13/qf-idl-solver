@@ -20,7 +20,7 @@ func TestTrans(t *testing.T) {
 		clauses [][]db.Lit
 		stat    file.Status
 	}{
-		"basic_sat": {
+		"both_sat": {
 			base: db.DB{
 				AtomID2Diff: map[db.AtomID]*db.DifferenceConstraint{
 					3: {X: 0, Y: 1, K: big.NewInt(10)},

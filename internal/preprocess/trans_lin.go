@@ -4,11 +4,13 @@ import (
 	"github.com/ammrat13/qf-idl-solver/internal/db"
 )
 
-// The Trans preprocessor only applies the transitivity rule. This is the bare
-// minimum required to allow the solver to function.
-type Trans struct{}
+// The TransLin preprocessor only applies the transitivity rule. To do this, it
+// scans across each variable pair's atoms array and says that one implies the
+// next. In this way, the number of extra clauses is linear in the number of
+// atoms associated with a pair of variables.
+type TransLin struct{}
 
-func (Trans) Preprocess(db *db.DB) {
+func (TransLin) Preprocess(db *db.DB) {
 
 	// For each pair of variables, add constraints.
 	for _, atoms := range db.Variables2AtomIDs {
@@ -20,8 +22,7 @@ func (Trans) Preprocess(db *db.DB) {
 
 		// Have each constraint imply the next, since they are in sorted order
 		// by their constants. Remember that the difference constraints have the
-		// form x - y <= k. Furthermore, if two subsequent constants are equal,
-		// add an if-and-only-if.
+		// form x - y <= k.
 		for i := 0; i < len(atoms)-1; i++ {
 			j := i + 1
 

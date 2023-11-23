@@ -11,6 +11,10 @@ import (
 )
 
 func TestTrans(t *testing.T) {
+	preprocessors := map[string]preprocess.Preprocessor{
+		"trans_lin":  preprocess.TransLin{},
+		"trans_quad": preprocess.TransQuad{},
+	}
 	tests := map[string]struct {
 		base    db.DB
 		clauses [][]int
@@ -93,16 +97,20 @@ func TestTrans(t *testing.T) {
 	for name, test := range tests {
 		test := test
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+			for preprocName, preproc := range preprocessors {
+				preproc := preproc
+				t.Run(preprocName, func(t *testing.T) {
+					t.Parallel()
 
-			ret := test.base
-			ret.Clauses = gini.New()
-			ret.AddClauses(test.clauses...)
+					ret := test.base
+					ret.Clauses = gini.New()
+					ret.AddClauses(test.clauses...)
 
-			preprocess.Trans{}.Preprocess(&ret)
-
-			if ret.SATSolve() != test.stat {
-				t.Errorf("wrong satisfiability")
+					preproc.Preprocess(&ret)
+					if ret.SATSolve() != test.stat {
+						t.Errorf("wrong satisfiability")
+					}
+				})
 			}
 		})
 	}

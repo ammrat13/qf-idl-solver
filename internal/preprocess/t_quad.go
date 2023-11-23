@@ -4,12 +4,12 @@ import (
 	"github.com/ammrat13/qf-idl-solver/internal/db"
 )
 
-// The TransQuad preprocessor only applies the transitivity rule. To do this, it
+// The TQuad preprocessor only applies the transitivity rule. To do this, it
 // tries to apply it to every pair of atoms for each variable pair. In this way,
 // the number of extra clauses is quadratic in the number of atoms.
-type TransQuad struct{}
+type TQuad struct{}
 
-func (TransQuad) Preprocess(dbase *db.DB) {
+func (TQuad) Preprocess(dbase *db.DB) {
 
 	// For each pair of variables, add constraints.
 	for _, atoms := range dbase.Variables2AtomIDs {

@@ -19,9 +19,9 @@ type Preprocessor interface {
 // they are associated with. We use this map when processing command-line
 // arguments.
 var Preprocessors = map[string]Preprocessor{
-	"nil":        Nil{},
-	"trans-lin":  TransLin{},
-	"trans-quad": TransQuad{},
-	"tie-lin":    TIELin{},
-	"tie-quad":   TIEQuad{},
+	"nil":      Nil{},
+	"t-lin":    TLin{},
+	"t-quad":   TQuad{},
+	"tie-lin":  TIELin{},
+	"tie-quad": TIEQuad{},
 }

@@ -10,10 +10,10 @@ import (
 	"github.com/go-air/gini"
 )
 
-func TestTrans(t *testing.T) {
+func TestT(t *testing.T) {
 	preprocessors := map[string]preprocess.Preprocessor{
-		"trans-lin":  preprocess.TransLin{},
-		"trans-quad": preprocess.TransQuad{},
+		"t-lin":  preprocess.TLin{},
+		"t-quad": preprocess.TQuad{},
 	}
 	tests := map[string]struct {
 		base    db.DB

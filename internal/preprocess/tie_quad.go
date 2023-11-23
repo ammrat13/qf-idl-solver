@@ -18,7 +18,7 @@ func (TIEQuad) Preprocess(dbase *db.DB) {
 	ONE := big.NewInt(1)
 
 	// Apply all the transitivity constraints.
-	TransLin{}.Preprocess(dbase)
+	TLin{}.Preprocess(dbase)
 
 	// For each pair of variables, add inclusion and exclusion constraints.
 	for pospair, posatoms := range dbase.Variables2AtomIDs {

@@ -4,13 +4,13 @@ import (
 	"github.com/ammrat13/qf-idl-solver/internal/db"
 )
 
-// The TransLin preprocessor only applies the transitivity rule. To do this, it
+// The TLin preprocessor only applies the transitivity rule. To do this, it
 // scans across each variable pair's atoms array and says that one implies the
 // next. In this way, the number of extra clauses is linear in the number of
 // atoms associated with a pair of variables.
-type TransLin struct{}
+type TLin struct{}
 
-func (TransLin) Preprocess(dbase *db.DB) {
+func (TLin) Preprocess(dbase *db.DB) {
 
 	// For each pair of variables, add constraints.
 	for _, atoms := range dbase.Variables2AtomIDs {

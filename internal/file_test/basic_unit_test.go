@@ -9,7 +9,6 @@ import (
 )
 
 func TestBasicParsing(t *testing.T) {
-	t.FailNow()
 	tests := map[string]io.Reader{
 		"smoke": strings.NewReader(`
 			(set-info :smt-lib-version 2.6)

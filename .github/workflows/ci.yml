@@ -27,11 +27,18 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.QF_IDL_SOLVER_GO_VERSION }}
+      - name: Install Dependencies
+        run: |
+          go get .
+          go install github.com/BurntSushi/go-sumtype
       - name: Go Vet
         run: go vet ./...
         if: ${{ always() }}
       - name: Go Fmt
         run: '[[ "$(gofmt -d -e . | wc -l)" -eq 0 ]]'
+        if: ${{ always() }}
+      - name: Go Sumtype
+        run: go-sumtype ./...
         if: ${{ always() }}
 
   test:

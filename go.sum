@@ -1,3 +1,4 @@
+github.com/BurntSushi/go-sumtype v0.0.0-20221020234012-480526a59796 h1:LkyKOzdmNBpJs/9iWbF7Dx4q0Ue0wESKUVLaUgcbpg8=
 github.com/BurntSushi/go-sumtype v0.0.0-20221020234012-480526a59796/go.mod h1:V4gPjiBeLsr++PoZh39o+6fZ++EbypxSUmMplhmBNRY=
 github.com/alecthomas/participle/v2 v2.1.0 h1:z7dElHRrOEEq45F2TG5cbQihMtNTv8vwldytDj7Wrz4=
 github.com/alecthomas/participle/v2 v2.1.0/go.mod h1:Y1+hAs8DHPmc3YUFzqllV+eSQ9ljPTk0ZkPMtEdAx2c=

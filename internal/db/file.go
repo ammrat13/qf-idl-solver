@@ -639,6 +639,10 @@ func (db *DB) processIntEquOp(e file.EquOpBuilder, a0 expr, ctx context) (ret ex
 		x = arg0.Var
 		y = arg1.Var
 		k = big.NewInt(0)
+	case exprConst:
+		panic("Should've handled before")
+	case exprLit:
+		panic("Should've handled before")
 	default:
 		panic("Unhandled case")
 	}

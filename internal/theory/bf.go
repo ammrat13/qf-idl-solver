@@ -28,7 +28,7 @@ type BF struct {
 func (thr *BF) SetNumVar(numVar uint) { thr.numVar = numVar }
 func (thr BF) Copy() Solver           { return &BF{BasicMode: thr.BasicMode, numVar: thr.numVar} }
 
-// A nodeData struct holds all the bookkeeping infomation we keep on a
+// A bfNodeData struct holds all the bookkeeping infomation we keep on a
 // per-vertex basis.
 type bfNodeData struct {
 
@@ -110,7 +110,7 @@ func (thr *BF) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err er
 
 // The findCycleFrom function follows the path backwards from the node idx
 // looking for a cycle. If the node is not contained in a cycle, this panics.
-func (thr BF) findCycleFrom(idx Node, stats *stats.Stats) (ret Cycle) {
+func (thr BF) findCycleFrom(idx Node, stats *stats.Stats) Cycle {
 	// Implement tortise and hare
 	slow := idx
 	fast := idx

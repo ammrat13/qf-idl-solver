@@ -32,7 +32,7 @@ type SPFA struct {
 func (thr *SPFA) SetNumVar(numVar uint) { thr.numVar = numVar }
 func (thr SPFA) Copy() Solver           { return &SPFA{BasicMode: thr.BasicMode, numVar: thr.numVar} }
 
-// A nodeData struct holds all the bookkeeping infomation we keep on a
+// An spfaNodeData struct holds all the bookkeeping infomation we keep on a
 // per-vertex basis.
 type spfaNodeData struct {
 
@@ -136,7 +136,7 @@ func (thr *SPFA) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err 
 
 // The findCycleFrom function follows the path backwards from the node idx
 // looking for a cycle. If the node is not contained in a cycle, this panics.
-func (thr SPFA) findCycleFrom(idx Node, stats *stats.Stats) (ret Cycle) {
+func (thr SPFA) findCycleFrom(idx Node, stats *stats.Stats) Cycle {
 	// Implement tortise and hare
 	slow := idx
 	fast := idx
@@ -234,7 +234,7 @@ func (thr SPFA) parentGraphSearch(stats *stats.Stats) (ret Node, err error) {
 	}
 
 	// Search every vertex to check for a cycle.
-	for i := uint(0); i < thr.numVar; i++ {
+	for i := Node(0); i < thr.numVar; i++ {
 		ret, err = search(i)
 		if err == nil {
 			return

@@ -125,9 +125,9 @@ func parseAdjList(adjListData []byte, bias int64) (n uint, adjList theory.Adjace
 	// Construct the graph by iterating over every possible pair of
 	// vertices.
 	adjList = make(theory.AdjacencyList)
-	for i := uint(0); i < n; i++ {
+	for i := theory.Node(0); i < n; i++ {
 		adjList[i] = make(map[theory.Node]theory.Edge)
-		for j := uint(0); j < n; j++ {
+		for j := theory.Node(0); j < n; j++ {
 			// Compute the weight depending on the bias.
 			weight := int64(adjListData[i*n+j]) + bias
 			// Add the edge.

@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main, fix/ci]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  QF_IDL_SOLVER_GO_VERSION: '1.21.4'
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.QF_IDL_SOLVER_GO_VERSION }}
+      - name: Install Dependencies
+        run: |
+          go get .
+          go install gotest.tools/gotestsum@latest
+      - name: Test
+        run: gotestsum --junitfile ./unit-tests.xml -- -short ./...
+      - name: Summarize Tests
+        uses: test-summary/action@v2
+        with:
+          paths: ./unit-tests.xml
+        if: ${{ always() }}
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.QF_IDL_SOLVER_GO_VERSION }}
+      - name: Install Dependencies
+        run: go get .
+      - name: Build
+        run: go build -v .
+      - name: Package Binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: qf-idl-solver
+          path: ./qf-idl-solver

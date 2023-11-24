@@ -29,8 +29,10 @@ jobs:
           go-version: ${{ env.QF_IDL_SOLVER_GO_VERSION }}
       - name: Go Vet
         run: go vet ./...
+        if: ${{ always() }}
       - name: Go Fmt
         run: '[[ "$(gofmt -d -e . | wc -l)" -eq 0 ]]'
+        if: ${{ always() }}
 
   test:
     name: Test

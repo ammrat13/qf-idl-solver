@@ -70,6 +70,7 @@ func (thr *BF) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err er
 			uDat := &thr.nodes[uIdx]
 			for vIdx, edge := range vIdxs {
 				vDat := &thr.nodes[vIdx]
+				stats.TheorySolverLoops++
 
 				vDist := new(big.Int).Add(uDat.Distance, edge.Weight)
 				if vDist.Cmp(vDat.Distance) == -1 {
@@ -92,6 +93,7 @@ func (thr *BF) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err er
 		uDat := &thr.nodes[uIdx]
 		for vIdx, edge := range vIdxs {
 			vDat := &thr.nodes[vIdx]
+			stats.TheorySolverLoops++
 
 			vDist := new(big.Int).Add(uDat.Distance, edge.Weight)
 			if vDist.Cmp(vDat.Distance) == -1 {

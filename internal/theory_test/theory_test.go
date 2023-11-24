@@ -83,7 +83,7 @@ func fuzzGold(f *testing.F, th theory.Solver) {
 		// Run the theory solver
 		thr := th.Copy()
 		thr.SetNumVar(n)
-		_, errThr := thr.Solve(adjList, &stats.Stats{})
+		cycThr, errThr := thr.Solve(adjList, &stats.Stats{})
 
 		// Run the gold model.
 		gold := theory.BF{BasicMode: true}
@@ -93,6 +93,22 @@ func fuzzGold(f *testing.F, th theory.Solver) {
 		// Check that they agree
 		if (errThr == nil) != (errGold == nil) {
 			t.Error("theory and gold disagree")
+		}
+
+		// If we found a negative cycle...
+		if errThr != nil {
+			return
+		}
+		// ... check that it is negative.
+		total := big.NewInt(0)
+		for i := 0; i < len(cycThr); i++ {
+			j := (i + 1) % len(cycThr)
+			ni := cycThr[i]
+			nj := cycThr[j]
+			total = total.Add(total, adjList[ni][nj].Weight)
+		}
+		if total.Sign() >= 0 {
+			t.Error("returned cycle not negative")
 		}
 	})
 }

@@ -65,7 +65,6 @@ var Solvers = map[string]Solver{
 	"bf-full":    &BF{BasicMode: false},
 	"spfa-basic": &SPFA{BasicMode: true},
 	"spfa-full":  &SPFA{BasicMode: false},
-	"gr":         &GR{},
 }
 
 // The Solve function implements the high-level solving algorithm described in

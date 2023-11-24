@@ -49,7 +49,6 @@ type Configuration struct {
 // and extracts a [Configuration] struct from them. If that fails, this function
 // exits with code [ConfigurationErrorExit].
 func GetConfiguration() (ret Configuration) {
-	fmt.Printf("%v")
 
 	// Define for error handling
 	var err error

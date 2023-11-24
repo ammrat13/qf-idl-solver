@@ -24,7 +24,7 @@ type SPFA struct {
 
 	// The nodes field consists of all the metadata we keep on a per-node basis.
 	// The index corresponds to the node number.
-	nodes []nodeData
+	nodes []spfaNodeData
 	// The queue field represents the queue we use for SPFA.
 	queue *deque.Deque[Node]
 }
@@ -32,19 +32,9 @@ type SPFA struct {
 func (thr *SPFA) SetNumVar(numVar uint) { thr.numVar = numVar }
 func (thr SPFA) Copy() Solver           { return &SPFA{BasicMode: thr.BasicMode, numVar: thr.numVar} }
 
-// A nodeState describes the different states a vertex can be in in the
-// unlabeled / labeled / scanned paradigm. The Bellman-Ford algorithm only uses
-// the labeled and scanned states.
-type nodeState int
-
-const (
-	nodeStateLabeled nodeState = iota
-	nodeStateScanned
-)
-
 // A nodeData struct holds all the bookkeeping infomation we keep on a
 // per-vertex basis.
-type nodeData struct {
+type spfaNodeData struct {
 
 	// The State of a node reflects whether or not it is in the queue. If it is,
 	// the state is [nodeStateLabeled], otherwise it is [nodeStateScanned].
@@ -68,13 +58,13 @@ func (thr *SPFA) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err 
 
 	// Create the auxiliary structures.
 	thr.graph = graph
-	thr.nodes = make([]nodeData, thr.numVar)
+	thr.nodes = make([]spfaNodeData, thr.numVar)
 	thr.queue = deque.New[Node]()
 	ZERO := big.NewInt(0)
 
-	// Initialize the nodes at depth zero.
+	// Initialize the nodes at distance zeor with no relaxations.
 	for i := range thr.nodes {
-		thr.nodes[i] = nodeData{
+		thr.nodes[i] = spfaNodeData{
 			State:       nodeStateLabeled,
 			Distance:    ZERO,
 			Predecessor: nil,

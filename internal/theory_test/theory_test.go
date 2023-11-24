@@ -9,48 +9,34 @@ import (
 	"github.com/ammrat13/qf-idl-solver/internal/theory"
 )
 
-// The fuzzTheory function takes in a theory solver and checks that it behaves
-// consistently. Specifically, it checks that it doesn't return a negative cycle
-// when all the weights are positive, and it checks that all the negative cycles
-// returned are in fact negative. Note that this is not a complete correctness
-// specification.
-func fuzzTheory(f *testing.F, th theory.Solver) {
-
+// The fuzzConsistency function takes in a theory solver and checks that it
+// behaves consistently. Specifically, it checks that it doesn't return a
+// negative cycle when all the weights are positive, and it checks that all the
+// negative cycles returned are in fact negative. Note that this is not a
+// complete correctness specification.
+func fuzzConsistency(f *testing.F, th theory.Solver) {
 	f.Add([]byte("\x00\x00\x00\x00"), false)
 	f.Add([]byte("\x80\x80\x80\x80"), false)
 	f.Add([]byte("\x00\x00\x00\x00"), true)
 	f.Add([]byte("\xff\xff\xff\x00"), true)
 
-	f.Fuzz(func(t *testing.T, graphData []byte, shift bool) {
+	f.Fuzz(func(t *testing.T, adjListData []byte, shift bool) {
 
-		// We have N**2 edges, each represented by a byte. Thus, we must compute
-		// how many vertices we have.
-		N := uint(math.Floor(math.Sqrt(float64(len(graphData)))))
-		if N <= 0 {
-			return
+		// Construct the graph. If we were instructed to shift, do that.
+		var bias int64
+		if shift {
+			bias = -128
+		} else {
+			bias = 0
 		}
-
-		// Construct the graph by iterating over every possible pair of
-		// vertices.
-		adjList := make(theory.AdjacencyList)
-		for i := uint(0); i < N; i++ {
-			adjList[i] = make(map[theory.Node]theory.Edge)
-			for j := uint(0); j < N; j++ {
-				// Compute the weight depending on the shift.
-				weight := int64(graphData[i*N+j])
-				if shift {
-					weight -= 128
-				}
-				// Add the edge.
-				adjList[i][j] = theory.Edge{
-					Weight: big.NewInt(weight),
-				}
-			}
+		n, adjList := parseAdjList(adjListData, bias)
+		if n == 0 {
+			return
 		}
 
 		// Run the theory solver
 		thr := th.Copy()
-		thr.SetNumVar(N)
+		thr.SetNumVar(n)
 		cyc, err := thr.Solve(adjList, &stats.Stats{})
 
 		// If we have no negative edges, we can't possibly have a negative
@@ -78,5 +64,67 @@ func fuzzTheory(f *testing.F, th theory.Solver) {
 	})
 }
 
-func FuzzSPFABasic(f *testing.F) { fuzzTheory(f, &theory.SPFA{BasicMode: true}) }
-func FuzzSPFAFull(f *testing.F)  { fuzzTheory(f, &theory.SPFA{BasicMode: false}) }
+// The fuzzGold function checs that the given theory solver behaves the same as
+// the gold model, which is raw Bellman-Ford. It doesn't need to report the same
+// negative cycle, but it needs to agree about whether there is a negative cycle.
+func fuzzGold(f *testing.F, th theory.Solver) {
+	f.Add([]byte("\x00\x00\x00\x00"))
+	f.Add([]byte("\x80\x80\x80\x80"))
+	f.Add([]byte("\xff\xff\xff\x00"))
+
+	f.Fuzz(func(t *testing.T, adjListData []byte) {
+
+		// Construct the graph.
+		n, adjList := parseAdjList(adjListData, -128)
+		if n == 0 {
+			return
+		}
+
+		// Run the theory solver
+		thr := th.Copy()
+		thr.SetNumVar(n)
+		_, errThr := thr.Solve(adjList, &stats.Stats{})
+
+		// Run the gold model.
+		gold := theory.BF{BasicMode: true}
+		gold.SetNumVar(n)
+		_, errGold := gold.Solve(adjList, &stats.Stats{})
+
+		// Check that they agree
+		if (errThr == nil) != (errGold == nil) {
+			t.Error("theory and gold disagree")
+		}
+	})
+}
+
+// The parseAdjList function takes in a sequence of bytes and returns a graph
+// constructed from them. It creates as many nodes as it can, then applies the
+// weights given in the bytestream, shifted by the bias.
+func parseAdjList(adjListData []byte, bias int64) (n uint, adjList theory.AdjacencyList) {
+
+	// We have n**2 edges, each represented by a byte. Thus, we must compute how
+	// many vertices we have.
+	n = uint(math.Floor(math.Sqrt(float64(len(adjListData)))))
+
+	// Construct the graph by iterating over every possible pair of
+	// vertices.
+	adjList = make(theory.AdjacencyList)
+	for i := uint(0); i < n; i++ {
+		adjList[i] = make(map[theory.Node]theory.Edge)
+		for j := uint(0); j < n; j++ {
+			// Compute the weight depending on the bias.
+			weight := int64(adjListData[i*n+j]) + bias
+			// Add the edge.
+			adjList[i][j] = theory.Edge{
+				Weight: big.NewInt(weight),
+			}
+		}
+	}
+	return
+}
+
+func FuzzBFBasic(f *testing.F) { fuzzConsistency(f, &theory.BF{BasicMode: true}) }
+
+func FuzzBFFull(f *testing.F)    { fuzzGold(f, &theory.BF{BasicMode: false}) }
+func FuzzSPFABasic(f *testing.F) { fuzzGold(f, &theory.SPFA{BasicMode: true}) }
+func FuzzSPFAFull(f *testing.F)  { fuzzGold(f, &theory.SPFA{BasicMode: false}) }

@@ -33,6 +33,16 @@ type AdjacencyList = map[Node]map[Node]Edge
 // the last one is adjacent to the first.
 type Cycle = []db.VariableID
 
+// A nodeState describes the different states a vertex can be in in the
+// unlabeled / labeled / scanned paradigm.
+type nodeState int
+
+const (
+	nodeStateUnlabeled nodeState = iota
+	nodeStateLabeled
+	nodeStateScanned
+)
+
 // A Solver takes in an [AdjacencyList] representing the conflict graph, as well
 // as the number of nodes in the graph. If a negative-weight cycle exists in the
 // conflict graph, it returns it. Otherwise, it returns an error.
@@ -51,8 +61,10 @@ type Solver interface {
 // The Solvers variable stores a map from strings to the [Solver] they are
 // associated with. We use this map when processing command-line arguments.
 var Solvers = map[string]Solver{
+	"bf-baisc":   &BF{BasicMode: true},
+	"bf-full":    &BF{BasicMode: false},
 	"spfa-basic": &SPFA{BasicMode: true},
-	"spfa":       &SPFA{BasicMode: false},
+	"spfa-full":  &SPFA{BasicMode: false},
 }
 
 // The Solve function implements the high-level solving algorithm described in

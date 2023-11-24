@@ -61,7 +61,7 @@ type Solver interface {
 // The Solvers variable stores a map from strings to the [Solver] they are
 // associated with. We use this map when processing command-line arguments.
 var Solvers = map[string]Solver{
-	"bf-baisc":   &BF{BasicMode: true},
+	"bf-basic":   &BF{BasicMode: true},
 	"bf-full":    &BF{BasicMode: false},
 	"spfa-basic": &SPFA{BasicMode: true},
 	"spfa-full":  &SPFA{BasicMode: false},

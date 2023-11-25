@@ -152,13 +152,13 @@ func (thr Tarjan) disassemble(uIdx Node, fromIdx Node, toIdx Node, stats *stats.
 
 	// If our target node is the node we're looking for, return the cycle.
 	if uIdx == toIdx {
-		ret = make([]Node, 0)
+		ret = make([]Node, 0, thr.numVar)
 		// Follow the parents from to until we get to from.
 		cur := toIdx
 		for cur != fromIdx {
 			stats.TheorySolverLoops++
 			ret = append(ret, cur)
-			cur = *thr.nodes[fromIdx].Predecessor
+			cur = *thr.nodes[cur].Predecessor
 		}
 		ret = append(ret, fromIdx)
 		// Remember to reverse.
@@ -171,7 +171,14 @@ func (thr Tarjan) disassemble(uIdx Node, fromIdx Node, toIdx Node, stats *stats.
 	// Otherwise, disassemble all our children.
 	for vIdx := range thr.parentGraph[uIdx] {
 		stats.TheorySolverLoops++
-		thr.disassemble(vIdx, fromIdx, toIdx, stats)
+		// Recurse. Remember to check if we found a cycle.
+		ret, err = thr.disassemble(vIdx, fromIdx, toIdx, stats)
+		if err == nil {
+			return
+		}
+		// Otherwise, the subgraph can't possibly lead to to. Thus, we can
+		// eliminate it.
+		thr.nodes[vIdx].Predecessor = nil
 	}
 	// Get rid of all our children and mark us as unlabeled.
 	thr.parentGraph[uIdx] = nil

@@ -59,7 +59,7 @@ func (thr *SPFA) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err 
 	// Create the auxiliary structures.
 	thr.graph = graph
 	thr.nodes = make([]spfaNodeData, thr.numVar)
-	thr.queue = deque.New[Node]()
+	thr.queue = deque.New[Node](int(thr.numVar))
 	ZERO := big.NewInt(0)
 
 	// Initialize the nodes at distance zeor with no relaxations.
@@ -73,7 +73,7 @@ func (thr *SPFA) Solve(graph AdjacencyList, stats *stats.Stats) (ret Cycle, err 
 	}
 	// Add all the nodes to the queue.
 	for i := range thr.nodes {
-		thr.queue.PushBack(uint(i))
+		thr.queue.PushBack(Node(i))
 	}
 
 	var iteration uint = 0

@@ -144,3 +144,4 @@ func FuzzBFBasic(f *testing.F) { fuzzConsistency(f, &theory.BF{BasicMode: true})
 func FuzzBFFull(f *testing.F)    { fuzzGold(f, &theory.BF{BasicMode: false}) }
 func FuzzSPFABasic(f *testing.F) { fuzzGold(f, &theory.SPFA{BasicMode: true}) }
 func FuzzSPFAFull(f *testing.F)  { fuzzGold(f, &theory.SPFA{BasicMode: false}) }
+func FuzzTarjan(f *testing.F)    { fuzzGold(f, &theory.Tarjan{}) }

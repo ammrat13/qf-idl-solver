@@ -1,4 +1,5 @@
 # Binaries
+qf-idl-solver
 *.exe
 *.exe~
 *.dll

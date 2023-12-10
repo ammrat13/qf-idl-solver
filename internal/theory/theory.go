@@ -181,15 +181,15 @@ func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
 }
 
 func addEdge(adjList AdjacencyList, varpair db.VariablePair, edge Edge) {
-	// Make sure the source (second) variable is populated.
-	_, ok := adjList[varpair.Snd]
+	// Make sure the source (first) variable is populated.
+	_, ok := adjList[varpair.Fst]
 	if !ok {
-		adjList[varpair.Snd] = make(map[Node]Edge)
+		adjList[varpair.Fst] = make(map[Node]Edge)
 	}
 	// If it doesn't exist, just add it. If it does, first check that the edge
 	// is less than.
-	oldEdge, ok := adjList[varpair.Snd][varpair.Fst]
+	oldEdge, ok := adjList[varpair.Fst][varpair.Snd]
 	if !ok || oldEdge.Weight.Cmp(edge.Weight) == 1 {
-		adjList[varpair.Snd][varpair.Fst] = edge
+		adjList[varpair.Fst][varpair.Snd] = edge
 	}
 }

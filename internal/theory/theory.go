@@ -69,9 +69,9 @@ var Solvers = map[string]Solver{
 }
 
 // The Solve function implements the high-level solving algorithm described in
-// class. In other words, it implements offline DPLL(T). It is complete - it
-// will never return unknown. It may panic though.
-func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
+// class. In other words, it implements offline DPLL(T). It returns unknown if
+// the soft timeout is reached at the end of an iteration.
+func Solve(dbase *db.DB, thr Solver, soft_timeout time.Duration, stats *stats.Stats) file.Status {
 
 	// Do theory setup.
 	thr.SetNumVar(dbase.NextVariable)
@@ -79,14 +79,16 @@ func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
 	// Auxiliary variables
 	ONE := big.NewInt(1)
 
-	for {
+	// Remember the start time. Only do iterations until the soft timeout, if
+	// the soft timeout was specified.
+	t_start := time.Now()
+	for soft_timeout == 0 || time.Since(t_start) < soft_timeout {
 		stats.SolverCalls++
 
 		// SAT Solve.
 		t_sat_start := time.Now()
 		satres := dbase.SATSolve()
-		t_sat_end := time.Now()
-		stats.SATSolverDuration += t_sat_end.Sub(t_sat_start)
+		stats.SATSolverDuration += time.Since(t_sat_start)
 		// If unsat, return unsat.
 		if satres == file.StatusUnsat {
 			return file.StatusUnsat
@@ -153,14 +155,12 @@ func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
 				})
 			}
 		}
-		t_graph_end := time.Now()
-		stats.GraphOverheadDuration += t_graph_end.Sub(t_graph_start)
+		stats.GraphOverheadDuration += time.Since(t_graph_start)
 
 		// Send the adjacency list to the theory solver.
 		t_thr_start := time.Now()
 		cycle, err := thr.Solve(adjList, stats)
-		t_thr_end := time.Now()
-		stats.TheorySolverDuration += t_thr_end.Sub(t_thr_start)
+		stats.TheorySolverDuration += time.Since(t_thr_start)
 		// If sat, we're done
 		if err != nil {
 			return file.StatusSat
@@ -175,9 +175,11 @@ func Solve(dbase *db.DB, thr Solver, stats *stats.Stats) file.Status {
 			toAdd[i] = -adjList[cycle[i]][cycle[j]].Lit
 		}
 		dbase.AddClauses(toAdd)
-		t_lrn_end := time.Now()
-		stats.LearnOverheadDuration += t_lrn_end.Sub(t_lrn_start)
+		stats.LearnOverheadDuration += time.Since(t_lrn_start)
 	}
+
+	// We timed out. Return unknown.
+	return file.StatusUnknown
 }
 
 func addEdge(adjList AdjacencyList, varpair db.VariablePair, edge Edge) {

@@ -371,7 +371,7 @@ func TestInequalitySolver(t *testing.T) {
 						t.FailNow()
 					}
 
-					if theory.Solve(&db, solver, &stats.Stats{}) != test.stat {
+					if theory.Solve(&db, solver, 0, &stats.Stats{}) != test.stat {
 						t.Errorf("wrong satisfiability")
 					}
 				})

@@ -22,8 +22,9 @@ const ParseErrorExit = 3
 // construct the clause database from an input file that was parsed correctly.
 const DatabaseConstructionErrorExit = 4
 
-// The TimeoutExit is the exit code for when solving times out.
-const TimeoutExit = 5
+// The HardTimeoutExit is the exit code for when solving times out and we kill
+// ourselves.
+const HardTimeoutExit = 5
 
 func main() {
 
@@ -81,22 +82,26 @@ func main() {
 	t_preproc_end := time.Now()
 	stats.PreprocessDuration = t_preproc_end.Sub(t_preproc_start)
 
-	// Run a goroutine to kill us on timeout. Only do this if we were in fact
-	// supplied a timeout.
-	if cfg.Timeout > 0 {
+	// Run a goroutine to kill us on hard timeout. Only do this if we were in
+	// fact supplied a timeout.
+	if cfg.HardTimeout > 0 {
 		go func() {
-			// Wait for the timeout
-			time.Sleep(cfg.Timeout)
+			// Wait for the hard timeout
+			time.Sleep(cfg.HardTimeout)
 			// Print results and die
 			printResult("unknown")
-			os.Exit(TimeoutExit)
+			os.Exit(HardTimeoutExit)
 		}()
 	}
 
-	// Solve. Make sure we get the right status.
-	status := theory.Solve(&db, cfg.Solver, &stats)
-	if exp := ast.GetStatus(); exp != file.StatusUnknown && exp != status {
-		panic("Solver returned wrong answer")
+	// Solve. Make sure we get the right status. Ignore unknowns.
+	status := theory.Solve(&db, cfg.Solver, cfg.SoftTimeout, &stats)
+	if status != file.StatusUnknown {
+		if expected := ast.GetStatus(); expected != file.StatusUnknown {
+			if expected != status {
+				panic("Solver returned wrong answer")
+			}
+		}
 	}
 
 	// Print the result. Make sure we only print once.

@@ -41,8 +41,11 @@ type Configuration struct {
 	// of human-readable format. This value only matters when PrintStats is set.
 	CSVStats bool
 
-	// Timeout is how long to try solving for before killing ourselves.
-	Timeout time.Duration
+	// SoftTimeout is how long to try solving before stopping instead of
+	// looping.
+	SoftTimeout time.Duration
+	// HardTimeout is how long to try solving for before killing ourselves.
+	HardTimeout time.Duration
 }
 
 // GetConfiguration looks at the command-line arguments passed to the program
@@ -70,7 +73,8 @@ func GetConfiguration() (ret Configuration) {
 	flag.StringVar(&ret.SolverName, "solver", "", "What theory to use")
 	flag.BoolVar(&ret.PrintStats, "stats", false, "Print statistics instead of problem status")
 	flag.BoolVar(&ret.CSVStats, "csv", false, "Print statistics in CSV format")
-	flag.DurationVar(&ret.Timeout, "timeout", 0, "Timeout for solving")
+	flag.DurationVar(&ret.SoftTimeout, "soft-timeout", 0, "How long to wait before stopping iterations")
+	flag.DurationVar(&ret.HardTimeout, "hard-timeout", 0, "How long to wait before killing ourselves")
 	flag.Parse()
 
 	// Now we have to handle the input file. First, check that we actually got

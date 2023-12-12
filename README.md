@@ -25,11 +25,14 @@ In addition to the input file, this program accepts a few command-line flags:
 * `stats`: prints statistics at the end of a run instead of `sat` / `unsat`.
 * `csv`: prints statistics in CSV format instead of the default human-readable
   format. This flag has no effect if `stats` is not specified.
-* `timeout`: accepts a duration as an argument, and gives up solving after that
-  duration. If the program gives up, the returned status is `unknown`.
-  Otherwise, the status is either `sat` or `unsat`. (In other words, this solver
-  is complete.) Also, the timeout doesn't count the time taken to ingest and
-  preprocess the file.
+* `soft-timeout` and `hard-timeout`: accept a duration as an argument, and give
+  up solving after that duration. If the program gives up, the returned status
+  is `unknown`. Otherwise, the status is either `sat` or `unsat`. Also, the
+  timeout doesn't count the time taken to ingest and preprocess the file.
+  * `soft-timeout`: waits for the current iteration of the solver to complete
+    before terminating.
+  * `hard-timeout`: kills the process after the duration elapses, possibly
+    leaving the statistics in an inconsistent state.
 
 Command-line flags can also be used to specify the preprocessing and theory
 solving strategies. The available preprocessing strategies, specified with the

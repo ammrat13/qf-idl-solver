@@ -91,6 +91,7 @@ func Solve(dbase *db.DB, thr Solver, soft_timeout time.Duration, stats *stats.St
 		stats.SATSolverDuration += time.Since(t_sat_start)
 		// If unsat, return unsat.
 		if satres == file.StatusUnsat {
+			stats.Solved = true
 			return file.StatusUnsat
 		}
 
@@ -163,6 +164,7 @@ func Solve(dbase *db.DB, thr Solver, soft_timeout time.Duration, stats *stats.St
 		stats.TheorySolverDuration += time.Since(t_thr_start)
 		// If sat, we're done
 		if err != nil {
+			stats.Solved = true
 			return file.StatusSat
 		}
 

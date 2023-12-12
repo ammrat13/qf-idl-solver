@@ -13,6 +13,11 @@ type Stats struct {
 	// format. If this is unset, they are printed in human-readable format.
 	csv bool
 
+	// The Solved member reports whether the solver actually got a solution.
+	// If this is false, it means the solver timed out, either with a soft
+	// timeout or a hard timeout.
+	Solved bool
+
 	// The IngestDuration member records how long it took to parse the file and
 	// convert it to CNF.
 	IngestDuration time.Duration
@@ -51,7 +56,8 @@ func New(csv bool) Stats { return Stats{csv: csv} }
 func (stats Stats) String() string {
 	if stats.csv {
 		return fmt.Sprintf(
-			"%d,%d,%d,%d,%d,%d,%d,%d",
+			"%v,%d,%d,%d,%d,%d,%d,%d,%d",
+			stats.Solved,
 			stats.IngestDuration.Nanoseconds(),
 			stats.PreprocessDuration.Nanoseconds(),
 			stats.SATSolverDuration.Nanoseconds(),
@@ -64,6 +70,7 @@ func (stats Stats) String() string {
 	} else {
 		return fmt.Sprintf(
 			"Statistics:\n"+
+				"  Solved = %v\n"+
 				"  Ingest = %v\n"+
 				"  Preprocess = %v\n"+
 				"  SAT = %v\n"+
@@ -72,6 +79,7 @@ func (stats Stats) String() string {
 				"  Learn Overhead = %v\n"+
 				"  Calls = %d\n"+
 				"  Loops = %d",
+			stats.Solved,
 			stats.IngestDuration,
 			stats.PreprocessDuration,
 			stats.SATSolverDuration,
